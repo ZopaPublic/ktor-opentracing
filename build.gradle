@@ -1,0 +1,41 @@
+buildscript {
+    ext.ktor_version = "1.3.2"
+    ext.opentracing_version = "0.33.0"
+}
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation platform('org.jetbrains.kotlin:kotlin-bom')
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+    implementation 'io.github.microutils:kotlin-logging:1.7.7'
+
+    implementation "io.ktor:ktor-server-core:$ktor_version"
+    implementation "io.ktor:ktor-client-core:$ktor_version"
+    implementation "io.ktor:ktor-client-apache:$ktor_version"
+
+    implementation "io.opentracing:opentracing-api:$opentracing_version"
+    implementation "io.opentracing:opentracing-noop:$opentracing_version"
+    implementation "io.opentracing:opentracing-util:$opentracing_version"
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.2"
+    testImplementation "com.willowtreeapps.assertk:assertk-jvm:0.23"
+    testImplementation "io.opentracing:opentracing-mock:$opentracing_version"
+    testImplementation "io.ktor:ktor-server-tests:$ktor_version"
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
+
+}
+
+test {
+    useJUnitPlatform()
+}
