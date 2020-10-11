@@ -2,6 +2,27 @@
 
 Library of Ktor features for OpenTracing instrumention of HTTP servers and clients. 
 
+## Installation 
+ 
+### 
+ 
+### Maven
+Add the following dependency to your `pom.xml`:
+```xml
+<dependency>
+ <groupId>com.zopa</groupId>
+ <artifactId>ktor-opentracing</artifactId>
+ <version>0.1.0</version>
+</dependency>
+```
+ 
+### Gradle
+Add the following to your `dependencies` in your `build.gradle` 
+ 
+```
+implementation "com.zopa:ktor-opentracing:0.1.0"
+```
+
 ## Usage
 
 ### Server Spans
