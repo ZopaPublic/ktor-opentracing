@@ -1,3 +1,5 @@
+[![Released Version][maven-img]][maven]
+
 # Ktor OpenTracing Instrumentation
 
 Library of Ktor features for OpenTracing instrumention of HTTP servers and clients. 
