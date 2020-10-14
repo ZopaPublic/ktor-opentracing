@@ -14,7 +14,7 @@ Add the following dependency to your `pom.xml`:
 <dependency>
  <groupId>com.zopa</groupId>
  <artifactId>ktor-opentracing</artifactId>
- <version>0.1.0</version>
+ <version>VERSION_NUMBER</version>
 </dependency>
 ```
  
@@ -22,7 +22,7 @@ Add the following dependency to your `pom.xml`:
 Add the following to your `dependencies` in your `build.gradle` 
  
 ```
-implementation "com.zopa:ktor-opentracing:0.1.0"
+implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
 ```
 
 ## Usage
