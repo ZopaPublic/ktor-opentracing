@@ -1,3 +1,7 @@
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.zopa/ktor-opentracing/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.zopa/ktor-opentracing)
+![GitHub](https://img.shields.io/github/license/zopaUK/ktor-opentracing.svg?color=green&style=popout)
+[![Unit Tests Actions Status](https://github.com/zopaUK/ktor-opentracing/workflows/Unit%20Tests/badge.svg)](https://github.com/{userName}/{repoName}/actions)
+
 # Ktor OpenTracing Instrumentation
 
 Library of Ktor features for OpenTracing instrumention of HTTP servers and clients. 
@@ -84,12 +88,12 @@ val client = HttpClient(Apache) {
 The outgoing HTTP headers from this client will contain the trace context of the client span. 
 This allows the service that is called to create child spans of this client span. 
 
-We recomment using this feature in a server that has `OpenTracingServer` installed.
+We recommend using this feature in a server that has `OpenTracingServer` installed.
 
 
 ## Configuration 
 
-Your application might be serving static content (such as k8s probes probes), for which you do not to create traces. 
+Your application might be serving static content (such as k8s probes), for which you do not to create traces. 
 You can filter these out as follows:
 ```kotlin
 install(OpenTracingServer) {
