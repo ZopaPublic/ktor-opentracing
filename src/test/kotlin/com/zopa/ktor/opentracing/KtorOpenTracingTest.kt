@@ -176,7 +176,7 @@ class KtorOpenTracingTest  {
                         return sqrt(i.toDouble())
                     }
 
-                    suspend fun sqrtOfIntSuspend(i: Int): Double = span("sqrtOfIntSuspend") {
+                    suspend fun sqrtOfIntSuspend(i: Int): Double = span {
                         delay(10)
                         return sqrt(i.toDouble())
                     }
@@ -211,7 +211,7 @@ class KtorOpenTracingTest  {
                     // second child span
                     assertThat(this[1].context().traceId()).isEqualTo(last().context().traceId())
                     assertThat(this[1].parentId()).isEqualTo(last().context().spanId())
-                    assertThat(this[1].operationName()).isEqualTo("sqrtOfIntSuspend")
+                    assertThat(this[1].operationName()).isEqualTo("defaultSpanName")
                 }
             }
         }
