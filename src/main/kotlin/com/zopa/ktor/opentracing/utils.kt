@@ -8,12 +8,13 @@ import kotlinx.coroutines.Job
 import mu.KotlinLogging
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.Exception
 import kotlin.coroutines.coroutineContext
 
 
 val log = KotlinLogging.logger { }
 
-inline fun <T> span(name: String, block: Span.() -> T): T {
+inline fun <T> span(name: String = "defaultSpanName", block: Span.() -> T): T {
     val tracer = getGlobalTracer()
     val span = tracer.buildSpan(name).start()
     try {
@@ -54,5 +55,25 @@ suspend fun Span.addCleanup() {
         }
         if (it != null) this.finish()
     }
+}
+
+/*
+    Helper function to name spans. Should only be used in method of a class as such:
+    classAndMethodName(this, object {})
+    Note that this function will give unexpected results if used in regular functions, extension functions and init functions. For these spans, it is preferable to define span names explicitly.
+*/
+fun classAndMethodName(
+        currentInstance: Any,
+        anonymousObjectCreatedInMethod: Any
+): String {
+    val className = currentInstance::class.simpleName
+
+    val methodName: String = try {
+        anonymousObjectCreatedInMethod.javaClass.enclosingMethod.name
+    } catch (e: Exception) {
+        ""
+    }
+
+    return "$className.$methodName()"
 }
 
