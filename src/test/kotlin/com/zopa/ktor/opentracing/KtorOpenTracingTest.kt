@@ -3,21 +3,15 @@ package com.zopa.ktor.opentracing
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.request.get
-import io.ktor.client.request.request
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.withTestApplication
+import io.ktor.application.*
+import io.ktor.client.*
+import io.ktor.client.engine.mock.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.server.testing.*
 import io.opentracing.Span
 import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
@@ -32,11 +26,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
-import java.util.Stack
+import java.util.*
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
-class KtorOpenTracingTest  {
+class KtorOpenTracingTest {
     val mockTracer = MockTracer(ThreadContextElementScopeManager())
 
     @BeforeEach
@@ -302,11 +296,11 @@ class KtorOpenTracingTest  {
 
     @Test
     fun `UuidFromPath returns path with UUID and uuid if UUID in path`() {
-        val path = "/evidence/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
+        val path = "/evidence/AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F"
 
         val pathUuid = path.UuidFromPath()
 
         assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
-        assertThat(pathUuid.uuid).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
+        assertThat(pathUuid.uuid).isEqualTo("AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
     }
 }
