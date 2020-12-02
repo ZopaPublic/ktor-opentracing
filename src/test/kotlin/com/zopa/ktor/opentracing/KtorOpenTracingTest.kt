@@ -46,216 +46,205 @@ class KtorOpenTracingTest  {
     }
 
     @Test
-    fun `Create server span for request without trace context in headers`() {
-        withTestApplication {
-            val path = "/greeting/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
+    fun `Create server span for request without trace context in headers`() = withTestApplication {
+        val path = "/greeting/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
 
-            application.install(OpenTracingServer)
+        application.install(OpenTracingServer)
 
-            application.routing {
-                get(path) {
-                    call.respond("OK")
-                }
+        application.routing {
+            get(path) {
+                call.respond("OK")
             }
+        }
 
-            handleRequest(HttpMethod.Get, path) {}
-            .let { call ->
-                assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+        handleRequest(HttpMethod.Get, path) {}
+        .let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
-                with(mockTracer.finishedSpans()) {
-                    assertThat(size).isEqualTo(1)
-                    assertThat(first().parentId()).isEqualTo(0L) // no parent span
-                    assertThat(first().operationName()).isEqualTo("GET /greeting/<UUID>")
-                    assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                    assertThat(first().tags().get("http.status_code")).isEqualTo(200)
-                    assertThat(first().tags().get("UUID")).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
-                }
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(1)
+                assertThat(first().parentId()).isEqualTo(0L) // no parent span
+                assertThat(first().operationName()).isEqualTo("GET /greeting/<UUID>")
+                assertThat(first().tags().get("span.kind")).isEqualTo("server")
+                assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+                assertThat(first().tags().get("UUID")).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
             }
         }
     }
 
     @Test
-    fun `Server span with error code has error tag`() {
-        withTestApplication {
-            val path = "/greeting"
+    fun `Server span with error code has error tag`() = withTestApplication {
+        val path = "/greeting"
 
-            application.install(OpenTracingServer)
+        application.install(OpenTracingServer)
 
-            application.routing {
-                get(path) {
-                    call.respond(HttpStatusCode.Unauthorized)
-                }
+        application.routing {
+            get(path) {
+                call.respond(HttpStatusCode.Unauthorized)
             }
-
-            handleRequest(HttpMethod.Get, path) {}
-                .let { call ->
-                    assertThat(call.response.status()).isEqualTo(HttpStatusCode.Unauthorized)
-
-                    with(mockTracer.finishedSpans()) {
-                        assertThat(size).isEqualTo(1)
-                        assertThat(first().parentId()).isEqualTo(0L) // no parent span
-                        assertThat(first().operationName()).isEqualTo("GET /greeting")
-                        assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                        assertThat(first().tags().get("http.status_code")).isEqualTo(401)
-                        assertThat(first().tags().get("error")).isEqualTo(true)
-                    }
-                }
         }
-    }
 
-    @Test
-    fun `Does not create server span when included in filters`() {
-        withTestApplication {
-            val path = "/metrics"
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.Unauthorized)
 
-            application.install(OpenTracingServer) {
-                filter { call -> call.request.path().startsWith("/metrics") }
-            }
-
-            application.routing {
-                get(path) {
-                    call.respond(HttpStatusCode.OK)
-                }
-            }
-
-            handleRequest(HttpMethod.Get, path) {}
-            .let { call ->
-                assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
-                assertThat(mockTracer.finishedSpans().size).isEqualTo(0)
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(1)
+                assertThat(first().parentId()).isEqualTo(0L) // no parent span
+                assertThat(first().operationName()).isEqualTo("GET /greeting")
+                assertThat(first().tags().get("span.kind")).isEqualTo("server")
+                assertThat(first().tags().get("http.status_code")).isEqualTo(401)
+                assertThat(first().tags().get("error")).isEqualTo(true)
             }
         }
     }
 
     @Test
-    fun `Create server span as child of span context in request headers`() {
-        withTestApplication {
-            val path = "/greeting"
+    fun `Does not create server span when included in filters`() = withTestApplication {
+        val path = "/metrics"
 
-            application.install(OpenTracingServer)
+        application.install(OpenTracingServer) {
+            filter { call -> call.request.path().startsWith("/metrics") }
+        }
 
-            application.routing {
-                get(path) {
-                    call.respond("OK")
-                }
+        application.routing {
+            get(path) {
+                call.respond(HttpStatusCode.OK)
             }
+        }
 
-            val rootSpan = mockTracer.buildSpan("root").start()
-
-            handleRequest(HttpMethod.Get, path) {
-                val map = mutableMapOf<String, String>()
-                val httpCarrier = TextMapAdapter(map)
-                mockTracer.inject(rootSpan.context(), Format.Builtin.HTTP_HEADERS, httpCarrier)
-                map.forEach { (header, value) ->
-                    addHeader(header, value)
-                }
-            }.let { call ->
-                assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
-
-                with(mockTracer.finishedSpans()) {
-                    assertThat(size).isEqualTo(1)
-                    assertThat(first().parentId()).isNotEqualTo(0L) // has parent span
-                    assertThat(first().references().first().referenceType).isEqualTo("child_of")
-                    assertThat(first().operationName()).isEqualTo("GET /greeting")
-                    assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                }
-            }
+        handleRequest(HttpMethod.Get, path) {}
+        .let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+            assertThat(mockTracer.finishedSpans().size).isEqualTo(0)
         }
     }
 
     @Test
-    fun `Manually instrumented span is child of server span`() {
-        withTestApplication {
-            val path = "/sqrt"
+    fun `Create server span as child of span context in request headers`() = withTestApplication {
+        val path = "/greeting"
 
-            application.install(OpenTracingServer)
+        application.install(OpenTracingServer)
 
-            application.routing {
-                get(path) {
-                    fun sqrtOfInt(i: Int): Double = span("sqrtOfInt") {
-                        setTag("i", i)
-                        return sqrt(i.toDouble())
-                    }
-
-                    suspend fun sqrtOfIntSuspend(i: Int): Double = span {
-                        delay(10)
-                        return sqrt(i.toDouble())
-                    }
-
-                    val sqrt: Double = sqrtOfInt(2)
-                    val sqrtSuspend: Double = runBlocking<Double> {
-                        sqrtOfIntSuspend(10)
-                    }
-
-                    call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
-                }
+        application.routing {
+            get(path) {
+                call.respond("OK")
             }
+        }
 
-            handleRequest(HttpMethod.Get, path) {}
-            .let { call ->
-                assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+        val rootSpan = mockTracer.buildSpan("root").start()
 
-                with(mockTracer.finishedSpans()) {
-                    assertThat(size).isEqualTo(3)
+        handleRequest(HttpMethod.Get, path) {
+            val map = mutableMapOf<String, String>()
+            val httpCarrier = TextMapAdapter(map)
+            mockTracer.inject(rootSpan.context(), Format.Builtin.HTTP_HEADERS, httpCarrier)
+            map.forEach { (header, value) ->
+                addHeader(header, value)
+            }
+        }.let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
-                    // server span
-                    assertThat(last().parentId()).isEqualTo(0L)
-                    assertThat(last().operationName()).isEqualTo("GET /sqrt")
-                    assertThat(last().tags().get("span.kind")).isEqualTo("server")
-
-                    // first child span
-                    assertThat(first().context().traceId()).isEqualTo(last().context().traceId())
-                    assertThat(first().parentId()).isEqualTo(last().context().spanId())
-                    assertThat(first().operationName()).isEqualTo("sqrtOfInt")
-                    assertThat(first().tags()["i"]).isEqualTo(2)
-
-                    // second child span
-                    assertThat(this[1].context().traceId()).isEqualTo(last().context().traceId())
-                    assertThat(this[1].parentId()).isEqualTo(last().context().spanId())
-                    assertThat(this[1].operationName()).isEqualTo("defaultSpanName")
-                }
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(1)
+                assertThat(first().parentId()).isNotEqualTo(0L) // has parent span
+                assertThat(first().references().first().referenceType).isEqualTo("child_of")
+                assertThat(first().operationName()).isEqualTo("GET /greeting")
+                assertThat(first().tags().get("span.kind")).isEqualTo("server")
             }
         }
     }
 
+
     @Test
-    fun `Client adds child span of server span for nested call`() {
-        withTestApplication {
-            val path = "/sqrt"
+    fun `Manually instrumented span is child of server span`() = withTestApplication {
+        val path = "/sqrt"
 
-            application.install(OpenTracingServer)
+        application.install(OpenTracingServer)
 
-            val client = HttpClient(MockEngine) {
-                install(OpenTracingClient)
-                engine {
-                    addHandler {
-                        respond("OK", HttpStatusCode.OK)
-                    }
+        application.routing {
+            get(path) {
+                fun sqrtOfInt(i: Int): Double = span("sqrtOfInt") {
+                    setTag("i", i)
+                    return sqrt(i.toDouble())
+                }
+
+                suspend fun sqrtOfIntSuspend(i: Int): Double = span {
+                    delay(10)
+                    return sqrt(i.toDouble())
+                }
+
+                val sqrt: Double = sqrtOfInt(2)
+                val sqrtSuspend: Double = runBlocking<Double> {
+                    sqrtOfIntSuspend(10)
+                }
+
+                call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
+            }
+        }
+
+        handleRequest(HttpMethod.Get, path) {}
+        .let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(3)
+
+                // server span
+                assertThat(last().parentId()).isEqualTo(0L)
+                assertThat(last().operationName()).isEqualTo("GET /sqrt")
+                assertThat(last().tags().get("span.kind")).isEqualTo("server")
+
+                // first child span
+                assertThat(first().context().traceId()).isEqualTo(last().context().traceId())
+                assertThat(first().parentId()).isEqualTo(last().context().spanId())
+                assertThat(first().operationName()).isEqualTo("sqrtOfInt")
+                assertThat(first().tags()["i"]).isEqualTo(2)
+
+                // second child span
+                assertThat(this[1].context().traceId()).isEqualTo(last().context().traceId())
+                assertThat(this[1].parentId()).isEqualTo(last().context().spanId())
+                assertThat(this[1].operationName()).isEqualTo("defaultSpanName")
+            }
+        }
+    }
+
+
+    @Test
+    fun `Client adds child span of server span for nested call`() = withTestApplication {
+        val path = "/sqrt"
+
+        application.install(OpenTracingServer)
+
+        val client = HttpClient(MockEngine) {
+            install(OpenTracingClient)
+            engine {
+                addHandler {
+                    respond("OK", HttpStatusCode.OK)
                 }
             }
+        }
 
-            application.routing {
-                get(path) {
-                    val clientResponse = client.get<String>("/member/74c144e6-ec05-49af-b3a2-217e1254897f")
-                    call.respond(clientResponse)
-                }
+        application.routing {
+            get(path) {
+                val clientResponse = client.get<String>("/member/74c144e6-ec05-49af-b3a2-217e1254897f")
+                call.respond(clientResponse)
             }
+        }
 
-            handleRequest(HttpMethod.Get, path) {}
-            .let { call ->
-                assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+        handleRequest(HttpMethod.Get, path) {}
+        .let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
-                with(mockTracer.finishedSpans()) {
-                    assertThat(size).isEqualTo(2)
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(2)
 
-                    assertThat(first().parentId()).isNotEqualTo(last().parentId())
-                    assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
-                    assertThat(first().tags().get("http.status_code")).isEqualTo(200)
-                    assertThat(first().tags().get("UUID")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
+                assertThat(first().parentId()).isNotEqualTo(last().parentId())
+                assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
+                assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+                assertThat(first().tags().get("UUID")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
 
-                    assertThat(last().parentId()).isEqualTo(0L)
-                    assertThat(last().operationName()).isEqualTo("GET /sqrt")
-                    assertThat(last().tags().get("span.kind")).isEqualTo("server")
-                }
+                assertThat(last().parentId()).isEqualTo(0L)
+                assertThat(last().operationName()).isEqualTo("GET /sqrt")
+                assertThat(last().tags().get("span.kind")).isEqualTo("server")
             }
         }
     }
