@@ -23,16 +23,14 @@ import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
 import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.util.GlobalTracer
-import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import java.util.Stack
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -309,4 +307,45 @@ class KtorOpenTracingTest  {
         assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
         assertThat(pathUuid.uuid).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
     }
+
+    @Test
+    fun `parallel spans are children of the same parent span`() = withTestApplication {
+        val path = "/greeting"
+
+        application.install(OpenTracingServer)
+
+        fun getUser() = span {
+            sqrt(10.0)
+        }
+
+        application.routing {
+            get(path) {
+                (1..2).map {
+                        async {
+                            span {
+                                getUser()
+                            }
+                        }
+                    }
+                    .awaitAll()
+
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(5)
+
+                val spanWithId3 = this.filter { it.context().spanId() == 3.toLong() }.first()
+                val spanWithId4 = this.filter { it.context().spanId() == 4.toLong() }.first()
+                val spanWithId5 = this.filter { it.context().spanId() == 5.toLong() }
+                val spanWithId6 = this.filter { it.context().spanId() == 6.toLong() }.first()
+
+                assertThat(spanWithId5.parentId()).isEqualTo(this[2].context().spanId())
+                assertThat(this[1].parentId()).isEqualTo(this[3].context().spanId())
+            }
+        }
+    }
+
 }
