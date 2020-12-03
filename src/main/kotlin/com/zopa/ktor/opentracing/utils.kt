@@ -14,18 +14,6 @@ import kotlin.coroutines.coroutineContext
 
 val log = KotlinLogging.logger { }
 
-inline fun <T> span(name: String = "defaultSpanName", block: Span.() -> T): T {
-    val tracer = getGlobalTracer()
-    val span = tracer.buildSpan(name).start()
-    try {
-        tracer.scopeManager().activate(span).use { scope ->
-            return block(span)
-        }
-    } finally {
-        span.finish()
-    }
-}
-
 data class PathUuid(val path: String, val uuid: String?)
 fun String.UuidFromPath(): PathUuid {
     val match = """\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b""".toRegex().find(this)

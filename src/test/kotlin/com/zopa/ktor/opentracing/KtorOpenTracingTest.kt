@@ -190,8 +190,7 @@ class KtorOpenTracingTest  {
                 }
             }
 
-            handleRequest(HttpMethod.Get, path) {}
-            .let { call ->
+            handleRequest(HttpMethod.Get, path) {}.let { call ->
                 assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
                 with(mockTracer.finishedSpans()) {
@@ -309,4 +308,54 @@ class KtorOpenTracingTest  {
         assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
         assertThat(pathUuid.uuid).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
     }
+
+
+    @Test
+    fun `span function has Span receiver type`() {
+        var receiverType: String? = null
+
+        withTestApplication {
+            val path = "/sqrt"
+            application.install(OpenTracingServer)
+            application.routing {
+                get(path) {
+                    fun sqrtOfInt(i: Int): Double = span {
+                        receiverType = this.javaClass.name
+                        return sqrt(i.toDouble())
+                    }
+                    sqrtOfInt(5)
+                    call.respond(HttpStatusCode.OK)
+                }
+            }
+
+            handleRequest(HttpMethod.Get, path) {}.let { call ->
+                assertThat(receiverType).isEqualTo("io.opentracing.mock.MockSpan")
+            }
+        }
+    }
+
+    @Test
+    fun `spanNoReceiver function has no span receiver type`() {
+        var receiverType: String? = null
+
+        withTestApplication {
+            val path = "/sqrt"
+            application.install(OpenTracingServer)
+            application.routing {
+                get(path) {
+                    fun sqrtOfInt(i: Int): Double = spanNoReceiver {
+                        receiverType = this.javaClass.name
+                        return sqrt(i.toDouble())
+                    }
+                    sqrtOfInt(5)
+                    call.respond(HttpStatusCode.OK)
+                }
+            }
+
+            handleRequest(HttpMethod.Get, path) {}.let { call ->
+                assertThat(receiverType).isEqualTo("io.ktor.util.pipeline.SuspendFunctionGun")
+            }
+        }
+    }
+
 }
