@@ -1,6 +1,10 @@
 buildscript {
     ext.ktor_version = "1.3.2"
     ext.opentracing_version = "0.33.0"
+
+    dependencies {
+        classpath 'com.novoda:bintray-release:0.9.2'
+    }
 }
 
 plugins {
@@ -8,7 +12,7 @@ plugins {
     id 'java-library'
 }
 
-apply plugin: 'maven'
+apply plugin: 'com.novoda.bintray-release'
 
 repositories {
     jcenter()
@@ -42,63 +46,12 @@ test {
     useJUnitPlatform()
 }
 
-
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
-group = "com.zopa"
-archivesBaseName = "ktor-opentracing"
-version = "0.1.1"
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: System.getenv("OSSRH_USERNAME"), password: System.getenv("OSSRH_PASSWORD"))
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: System.getenv("OSSRH_USERNAME"), password: System.getenv("OSSRH_PASSWORD"))
-            }
-
-            pom.project {
-                name 'ktor-opentracing'
-                packaging 'jar'
-                description 'Ktor features for OpenTracing instrumentation.'
-                url 'https://github.com/zopaUK/ktor-opentracing'
-
-                scm {
-                    connection 'scm:git:git://github.com/zopaUK/ktor-opentracing.git'
-                    developerConnection 'scm:git:ssh://github.com/zopaUK/ktor-opentracing.git'
-                    url 'https://github.com/zopaUK/ktor-opentracing'
-                }
-
-                licenses {
-                    license {
-                        name 'The MIT License (MIT)'
-                        url 'http://opensource.org/licenses/MIT'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'fstien'
-                        name 'Francois Stiennon'
-                        email 'francois.stiennon@gmail.com'
-                    }
-                }
-            }
-        }
-    }
+publish {
+    userOrg = 'fstien'
+    repoName = 'ktor-opentracing'
+    groupId = 'com.zopa'
+    artifactId = 'ktor-opentracing'
+    publishVersion = '0.1.1'
+    desc = 'Ktor features for OpenTracing instrumentation.'
+    website = 'https://github.com/zopaUK/ktor-opentracing'
 }
