@@ -4,34 +4,7 @@
 
 # Ktor OpenTracing Instrumentation
 
-Library of Ktor features for OpenTracing instrumention of HTTP servers and clients. 
-
-## Installation 
- 
-### 
- 
-### Maven
-Add the following dependency to your `pom.xml`:
-```xml
-<dependency>
- <groupId>com.zopa</groupId>
- <artifactId>ktor-opentracing</artifactId>
- <version>VERSION_NUMBER</version>
-</dependency>
-```
- 
-### Gradle
-Add the following to your `dependencies` in your `build.gradle` 
- 
-```
-implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
-```
-
-## Examples
-
-For a simple example of ktor app instrumented with OpenTracing, see [ktor-opentracing-example](https://github.com/fstien/ktor-opentracing-example). This app uses span names passed explicitely to the `span` inline function. 
-
-For automatic span naming using the class and method name, see [ktor-opentracing-span-naming-demo](https://github.com/fstien/ktor-opentracing-span-naming-demo).
+Library of Ktor features for OpenTracing instrumentation of HTTP servers and clients. 
 
 ## Usage
 
@@ -39,9 +12,7 @@ For automatic span naming using the class and method name, see [ktor-opentracing
 Install the `OpenTracingServer` feature as follows in a module: 
 
 ```kotlin 
-fun Application.mymodule() {
-    install(OpenTracingServer)
-}
+install(OpenTracingServer)
 ```
 
 The feature uses the tracer registered in [GlobalTracer](https://opentracing.io/guides/java/tracers/), which uses the `ThreadContextElementScopeManager`.
@@ -51,7 +22,7 @@ The feature uses the tracer registered in [GlobalTracer](https://opentracing.io/
 
 ```kotlin
 val tracer: Tracer = config.tracerBuilder
-    .withScopeManager(CoroutineThreadLocalScopeManager())
+    .withScopeManager(ThreadContextElementScopeManager())
     .build()
 
 GlobalTracer.registerIfAbsent(tracer)
@@ -87,9 +58,7 @@ This means that any method on the `Span` interface an be called in the block, su
 If your application calls another service using the Ktor HTTP client, you can install the `OpenTracingClient` feature on the client to create client spans: 
 
 ```kotlin
-val client = HttpClient(Apache) {
-    install(OpenTracingClient)
-}
+install(OpenTracingClient)
 ```
 The outgoing HTTP headers from this client will contain the trace context of the client span. 
 This allows the service that is called to create child spans of this client span. 
@@ -107,5 +76,30 @@ install(OpenTracingServer) {
 }
 ```
 
+## Installation 
+Using [jcenter](https://bintray.com/bintray/jcenter).
+ 
+### Maven
+Add the following dependency to your `pom.xml`:
+```xml
+<dependency>
+ <groupId>com.zopa</groupId>
+ <artifactId>ktor-opentracing</artifactId>
+ <version>VERSION_NUMBER</version>
+</dependency>
+```
+ 
+### Gradle
+Add the following to your `dependencies` in your `build.gradle` 
+ 
+```
+implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
+```
 
-#### [MIT](./LICENSE) License
+## Examples
+
+For a simple example of ktor app instrumented with OpenTracing, see [ktor-opentracing-example](https://github.com/fstien/ktor-opentracing-example). This app uses span names passed explicitely to the `span` inline function. 
+
+For automatic span naming using the class and method name, see [ktor-opentracing-span-naming-demo](https://github.com/fstien/ktor-opentracing-span-naming-demo).
+
+
