@@ -30,7 +30,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import java.util.Stack
-import kotlin.math.abs
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -314,36 +315,50 @@ class KtorOpenTracingTest  {
 
         application.install(OpenTracingServer)
 
-        fun getUser() = span {
-            sqrt(10.0)
+        fun getDoubleSecondTime(num: Int): Int = span {
+            setTag("grandParentSpanName", num)
+            return num*2
+        }
+
+        fun getDouble(parentSpanName: Int): Int = span {
+            setTag("parentSpanName", parentSpanName)
+            return getDoubleSecondTime(parentSpanName)*2
         }
 
         application.routing {
             get(path) {
-                (1..2).map {
-                        async {
-                            span {
-                                getUser()
+                val result: List<Int> = listOf(1, 10).map { id ->
+                        asyncTraced {
+                            span(id.toString()) {
+                                getDouble(id)
                             }
                         }
                     }
                     .awaitAll()
 
-                call.respond(HttpStatusCode.OK)
+                call.respond(HttpStatusCode.OK, result.toString())
             }
         }
 
         handleRequest(HttpMethod.Get, path) {}.let { call ->
+            assertThat(call.response.content).isEqualTo("[4, 40]")
+
             with(mockTracer.finishedSpans()) {
-                assertThat(size).isEqualTo(5)
+                assertThat(size).isEqualTo(7)
 
-                val spanWithId3 = this.filter { it.context().spanId() == 3.toLong() }.first()
-                val spanWithId4 = this.filter { it.context().spanId() == 4.toLong() }.first()
-                val spanWithId5 = this.filter { it.context().spanId() == 5.toLong() }
-                val spanWithId6 = this.filter { it.context().spanId() == 6.toLong() }.first()
+                val span1 = this.first { it.operationName() == "1" }
+                val span1Child = this.first { it.tags()["parentSpanName"] == 1 }
+                val span1GrandChild = this.first { it.tags()["grandParentSpanName"] == 1 }
 
-                assertThat(spanWithId5.parentId()).isEqualTo(this[2].context().spanId())
-                assertThat(this[1].parentId()).isEqualTo(this[3].context().spanId())
+                val span10 = this.first { it.operationName() == "10" }
+                val span10Child = this.first { it.tags()["parentSpanName"] == 10 }
+                val span10GrandChild = this.first { it.tags()["grandParentSpanName"] == 10 }
+
+                assertThat(span1Child.parentId()).isEqualTo(span1.context().spanId())
+                assertThat(span1GrandChild.parentId()).isEqualTo(span1Child.context().spanId())
+
+                assertThat(span10Child.parentId()).isEqualTo(span10.context().spanId())
+                assertThat(span10GrandChild.parentId()).isEqualTo(span10Child.context().spanId())
             }
         }
     }
