@@ -4,6 +4,7 @@ package com.zopa.ktor.opentracing
 import kotlinx.coroutines.runBlocking
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Test
 
 class TracingUtilTest {

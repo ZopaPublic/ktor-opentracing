@@ -61,6 +61,7 @@ At this stage, the application will be creating a single span for the duration o
 If the incoming request has tracing tracing context in its HTTP headers, then the span will be a child of the one in that context. 
 Otherwise, the feature will start a new trace. 
 
+
 ### Individual code blocks
 To get a more detailed view of requests, we might want to instrument individual code blocks as child spans. 
 We could start a new child span using the tracer instance directly, however this would be too intrusive and verbose.
@@ -73,15 +74,36 @@ class UserRepository {
     
         ... database call ...
        
-        catch (e: Exception) {
-            log("Sql Error: $e.message")    
-        }
+        return user
     }
 }
 ```
 
 `span` is passed an operation name and a code block, which has the `Span` as a receiver. 
 This means that any method on the `Span` interface an be called in the block, such as `setTag`, `log` or `getBaggageItem`. 
+
+### Concurrency with async
+
+Concurrent operations using `async` can break in-process context propagation which uses coroutine context, leading to spans with incorrect parents.
+To solve this issue, replace the calls to `async` with `asyncTraced`. This will pass the correct tracing context to the new coroutines. 
+
+```kotlin
+val scrapeResults = urls.map { url -> 
+    asyncTraced { 
+        httpClient.get(url)
+    }
+    .awaitAll()
+}
+```
+If your application starts new coroutines using any other coroutine builder, add `tracingContext()` to the context of the next coroutines. For example:
+```kotlin
+launch(coroutineContext + tracingContext()) {
+    span("TracedCoroutine") {
+        sleep(100)
+    }
+}
+```
+
 
 ### Client Spans
 If your application calls another service using the Ktor HTTP client, you can install the `OpenTracingClient` feature on the client to create client spans: 

@@ -3,21 +3,15 @@ package com.zopa.ktor.opentracing
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.request.get
-import io.ktor.client.request.request
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.withTestApplication
+import io.ktor.application.*
+import io.ktor.client.*
+import io.ktor.client.engine.mock.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
+import io.ktor.server.testing.*
 import io.opentracing.Span
 import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
@@ -29,9 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
-import java.util.Stack
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
+import java.util.*
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -310,14 +302,14 @@ class KtorOpenTracingTest  {
     }
 
     @Test
-    fun `parallel spans are children of the same parent span`() = withTestApplication {
+    fun `concurrent async spans are children of the same parent span`() = withTestApplication {
         val path = "/greeting"
 
         application.install(OpenTracingServer)
 
         fun getDoubleSecondTime(num: Int): Int = span {
             setTag("grandParentSpanName", num)
-            return num*2
+            return num * 2
         }
 
         fun getDouble(parentSpanName: Int): Int = span {
@@ -362,5 +354,4 @@ class KtorOpenTracingTest  {
             }
         }
     }
-
 }
