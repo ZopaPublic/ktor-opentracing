@@ -51,8 +51,8 @@ class UserRepository {
 }
 ```
 
-`span` is passed an operation name and a code block, which has the `Span` as a receiver. 
-This means that any method on the `Span` interface an be called in the block, such as `setTag`, `log` or `getBaggageItem`. 
+`span` is passed an operation name and an anonymous lambda, which has the `Span` as a receiver object. 
+This means that you can call `setTag`, `log`, `getBaggageItem` (or any method on the `Span` interface).
 
 ### Client Spans
 If your application calls another service using the Ktor HTTP client, you can install the `OpenTracingClient` feature on the client to create client spans: 
