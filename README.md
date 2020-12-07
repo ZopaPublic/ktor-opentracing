@@ -98,8 +98,12 @@ implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
 
 ## Examples
 
-For a simple example of ktor app instrumented with OpenTracing, see [ktor-opentracing-example](https://github.com/fstien/ktor-opentracing-example). This app uses span names passed explicitely to the `span` inline function. 
+- For a simple example of ktor app instrumented with OpenTracing, see [ktor-opentracing-example](https://github.com/fstien/ktor-opentracing-example). This app uses span names passed explicitely to the `span` inline function. 
 
-For automatic span naming using the class and method name, see [ktor-opentracing-span-naming-demo](https://github.com/fstien/ktor-opentracing-span-naming-demo).
+- For automatic span naming using the class and method name, see [ktor-opentracing-span-naming-demo](https://github.com/fstien/ktor-opentracing-span-naming-demo).
 
+## Related Projects
+
+- For Ktor services using [kotlin-logging](https://github.com/MicroUtils/kotlin-logging), you can use [kotlin-logging-opentracing-decorator](https://github.com/fstien/kotlin-logging-opentracing-decorator) to enrich your spans with logs. 
+- If you are using [Exposed](https://github.com/JetBrains/Exposed), you can use [Exposed-OpenTracing](https://github.com/fstien/Exposed-OpenTracing) to instrument database transactions.
 
