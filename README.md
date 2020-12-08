@@ -98,7 +98,7 @@ implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
 
 ## Examples
 
-- For a simple example of ktor app instrumented with OpenTracing, see [ktor-opentracing-example](https://github.com/fstien/ktor-opentracing-example). This app uses span names passed explicitely to the `span` inline function. 
+- For a simple example of ktor app instrumented with OpenTracing, see [ktor-opentracing-example](https://github.com/fstien/ktor-opentracing-example). This app uses span names passed explicitly to the `span` inline function. 
 
 - For automatic span naming using the class and method name, see [ktor-opentracing-span-naming-demo](https://github.com/fstien/ktor-opentracing-span-naming-demo).
 
