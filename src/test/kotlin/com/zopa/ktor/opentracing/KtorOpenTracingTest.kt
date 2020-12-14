@@ -6,8 +6,7 @@ import assertk.assertions.isNotEqualTo
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.*
 import io.ktor.client.request.get
 import io.ktor.client.request.request
 import io.ktor.http.HttpMethod
