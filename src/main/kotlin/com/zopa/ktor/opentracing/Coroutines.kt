@@ -16,7 +16,7 @@ fun tracingContext(): CoroutineContext {
     return threadLocalSpanStack.asContextElement(spanStack)
 }
 
-fun CoroutineScope.tracedLaunch(
+fun CoroutineScope.launchTraced(
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,
         block: suspend CoroutineScope.() -> Unit

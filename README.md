@@ -95,7 +95,7 @@ val scrapeResults = urls.map { url ->
     .awaitAll()
 }
 ```
-Underneath the hood, `asyncTraced` is adding the current tracing context to the coroutine context using a call to `tracingContext()`. You can add it yourself by calling `async(tracingContext())`. To `launch` a new coroutine with the tracing context, call `tracedLaunch`. 
+Underneath the hood, `asyncTraced` is adding the current tracing context to the coroutine context using a call to `tracingContext()`. You can add it yourself by calling `async(tracingContext())`. To `launch` a new coroutine with the tracing context, call `launchTraced`. 
 
 
 ### Client Spans
