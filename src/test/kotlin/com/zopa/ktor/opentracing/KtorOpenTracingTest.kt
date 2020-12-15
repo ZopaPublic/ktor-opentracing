@@ -333,6 +333,8 @@ class KtorOpenTracingTest  {
                     }
                     .awaitAll()
 
+
+
                 call.respond(HttpStatusCode.OK, result.toString())
             }
         }

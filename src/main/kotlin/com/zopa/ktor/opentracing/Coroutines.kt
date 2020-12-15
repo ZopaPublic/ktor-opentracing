@@ -16,12 +16,16 @@ fun tracingContext(): CoroutineContext {
     return threadLocalSpanStack.asContextElement(spanStack)
 }
 
+fun CoroutineScope.tracedLaunch(
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.() -> Unit
+): Job = launch(context + tracingContext(), start, block)
+
 fun <T> CoroutineScope.asyncTraced(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
-): Deferred<T> {
-    return async(context + tracingContext(), start) {
-        block()
-    }
+): Deferred<T> = async(context + tracingContext(), start) {
+    block()
 }

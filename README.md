@@ -95,14 +95,7 @@ val scrapeResults = urls.map { url ->
     .awaitAll()
 }
 ```
-If your application starts new coroutines using any other coroutine builder, add `tracingContext()` to the context of the next coroutines. For example:
-```kotlin
-launch(coroutineContext + tracingContext()) {
-    span("TracedCoroutine") {
-        sleep(100)
-    }
-}
-```
+Underneath the hood, `asyncTraced` is adding the current tracing context to the coroutine context using a call to `tracingContext()`. You can add it yourself by calling `async(tracingContext())`. To `launch` a new coroutine with the tracing context, call `tracedLaunch`. 
 
 
 ### Client Spans
