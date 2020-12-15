@@ -6,7 +6,8 @@ import assertk.assertions.isNotEqualTo
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.*
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
 import io.ktor.client.request.request
 import io.ktor.http.HttpMethod
@@ -22,13 +23,17 @@ import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
 import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.util.GlobalTracer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.awaitAll
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
-import java.util.*
+import java.util.Stack
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
