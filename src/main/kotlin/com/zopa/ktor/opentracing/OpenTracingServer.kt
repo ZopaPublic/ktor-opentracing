@@ -93,7 +93,9 @@ class OpenTracingServer(
 
                 val statusCode = context.response.status()
                 Tags.HTTP_STATUS.set(span, statusCode?.value)
-                if (statusCode.toString()[0] != '2') span.setTag("error", true)
+                if (statusCode == null || statusCode.value >= 400) {
+                    span.setTag("error", true)
+                }
 
                 span.finish()
             }
