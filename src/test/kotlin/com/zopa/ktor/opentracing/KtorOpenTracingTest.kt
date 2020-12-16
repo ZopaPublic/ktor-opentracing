@@ -83,6 +83,7 @@ class KtorOpenTracingTest {
             }
         }
 
+
         handleRequest(HttpMethod.Get, path) {}.let { call ->
             assertThat(call.response.status()).isEqualTo(HttpStatusCode.Unauthorized)
 
@@ -96,6 +97,45 @@ class KtorOpenTracingTest {
             }
         }
     }
+
+    @Test
+    fun `Server is tagged as error if status code is over 400`() = withTestApplication {
+        val pathBadRequest = "/greetingWithBadRequest"
+        val pathNotModified = "/greetingNotModified"
+
+        application.install(OpenTracingServer)
+
+        application.routing {
+            get(pathBadRequest) {
+                call.respond(HttpStatusCode.BadRequest)
+            }
+
+            get(pathNotModified) {
+                call.respond(HttpStatusCode.NotModified)
+            }
+        }
+
+        handleRequest(HttpMethod.Get, pathBadRequest) {}.let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.BadRequest)
+
+            with(mockTracer.finishedSpans()) {
+                assertThat(first().tags()["http.status_code"]).isEqualTo(400)
+                assertThat(first().tags()["error"]).isEqualTo(true)
+            }
+        }
+
+        mockTracer.reset()
+
+        handleRequest(HttpMethod.Get, pathNotModified) {}.let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.NotModified)
+
+            with(mockTracer.finishedSpans()) {
+                assertThat(first().tags()["http.status_code"]).isEqualTo(304)
+                assertThat(first().tags()["error"]).isEqualTo(null)
+            }
+        }
+    }
+
 
     @Test
     fun `Does not create server span when included in filters`() = withTestApplication {
