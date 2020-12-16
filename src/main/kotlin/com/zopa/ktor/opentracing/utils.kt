@@ -26,8 +26,8 @@ inline fun <T> span(name: String = "defaultSpanName", block: Span.() -> T): T {
     }
 }
 
-data class PathUuid(val path: String, val uuid: String?)
-fun String.UuidFromPath(): PathUuid {
+internal data class PathUuid(val path: String, val uuid: String?)
+internal fun String.UuidFromPath(): PathUuid {
     val match = """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex().find(this)
 
     if (match == null)
@@ -45,7 +45,7 @@ fun getGlobalTracer(): Tracer {
                     .also { log.warn("Tracer not registered in GlobalTracer. Using Noop tracer instead.") }
 }
 
-suspend fun Span.addCleanup() {
+internal suspend fun Span.addCleanup() {
     coroutineContext[Job]?.invokeOnCompletion {
         it?.also {
             val errors = StringWriter()

@@ -7,7 +7,7 @@ import io.opentracing.noop.NoopScopeManager
 import java.util.Stack
 
 
-val threadLocalSpanStack = ThreadLocal<Stack<Span>>()
+internal val threadLocalSpanStack = ThreadLocal<Stack<Span>>()
 
 class ThreadContextElementScopeManager: ScopeManager {
     override fun activate(span: Span?): Scope {
@@ -26,7 +26,7 @@ class ThreadContextElementScopeManager: ScopeManager {
     }
 }
 
-class CoroutineThreadLocalScope: Scope {
+internal class CoroutineThreadLocalScope: Scope {
     override fun close() {
         val spanStack = threadLocalSpanStack.get()
         if (spanStack == null) {
