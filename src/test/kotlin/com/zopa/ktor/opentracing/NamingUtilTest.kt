@@ -1,6 +1,5 @@
 package com.zopa.ktor.opentracing
 
-
 import kotlinx.coroutines.runBlocking
 import assertk.assertThat
 import assertk.assertions.isEqualTo

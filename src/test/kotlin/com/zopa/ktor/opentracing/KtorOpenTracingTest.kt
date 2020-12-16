@@ -6,7 +6,8 @@ import assertk.assertions.isNotEqualTo
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.*
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
 import io.ktor.client.request.request
 import io.ktor.http.HttpMethod
@@ -22,10 +23,11 @@ import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
 import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.util.GlobalTracer
-import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.awaitAll
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -336,5 +338,61 @@ class KtorOpenTracingTest {
 
         assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
         assertThat(pathUuid.uuid).isEqualTo("AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
+    }
+
+    @Test
+    fun `concurrent async spans are children of the same parent span`() = withTestApplication {
+        val path = "/greeting"
+
+        application.install(OpenTracingServer)
+
+        fun getDoubleSecondTime(num: Int): Int = span {
+            setTag("grandParentSpanName", num)
+            return num * 2
+        }
+
+        fun getDouble(parentSpanName: Int): Int = span {
+            setTag("parentSpanName", parentSpanName)
+            return getDoubleSecondTime(parentSpanName)*2
+        }
+
+        application.routing {
+            get(path) {
+                val result: List<Int> = listOf(1, 10).map { id ->
+                        asyncTraced {
+                            span(id.toString()) {
+                                getDouble(id)
+                            }
+                        }
+                    }
+                    .awaitAll()
+
+
+
+                call.respond(HttpStatusCode.OK, result.toString())
+            }
+        }
+
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
+            assertThat(call.response.content).isEqualTo("[4, 40]")
+
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(7)
+
+                val span1 = this.first { it.operationName() == "1" }
+                val span1Child = this.first { it.tags()["parentSpanName"] == 1 }
+                val span1GrandChild = this.first { it.tags()["grandParentSpanName"] == 1 }
+
+                val span10 = this.first { it.operationName() == "10" }
+                val span10Child = this.first { it.tags()["parentSpanName"] == 10 }
+                val span10GrandChild = this.first { it.tags()["grandParentSpanName"] == 10 }
+
+                assertThat(span1Child.parentId()).isEqualTo(span1.context().spanId())
+                assertThat(span1GrandChild.parentId()).isEqualTo(span1Child.context().spanId())
+
+                assertThat(span10Child.parentId()).isEqualTo(span10.context().spanId())
+                assertThat(span10GrandChild.parentId()).isEqualTo(span10Child.context().spanId())
+            }
+        }
     }
 }
