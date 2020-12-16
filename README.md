@@ -1,4 +1,4 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.zopa/ktor-opentracing/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.zopa/ktor-opentracing)
+ [![Download](https://api.bintray.com/packages/fstien/ktor-opentracing/ktor-opentracing/images/download.svg)](https://bintray.com/fstien/ktor-opentracing/ktor-opentracing/_latestVersion)
 ![GitHub](https://img.shields.io/github/license/zopaUK/ktor-opentracing.svg?color=green&style=popout)
 [![Unit Tests Actions Status](https://github.com/zopaUK/ktor-opentracing/workflows/Unit%20Tests/badge.svg)](https://github.com/{userName}/{repoName}/actions)
 
