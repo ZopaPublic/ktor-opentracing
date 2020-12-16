@@ -5,7 +5,7 @@ import io.opentracing.propagation.TextMap
 import java.lang.UnsupportedOperationException
 
 
-class RequestBuilderCarrier(private val headerBuilder: HeadersBuilder): TextMap {
+internal class RequestBuilderCarrier(private val headerBuilder: HeadersBuilder): TextMap {
     override fun put(key: String?, value: String?) {
         if (key != null && value != null) {
             headerBuilder.append(key, value)
