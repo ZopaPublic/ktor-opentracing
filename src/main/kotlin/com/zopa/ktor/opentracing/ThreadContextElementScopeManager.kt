@@ -4,7 +4,7 @@ import io.opentracing.Scope
 import io.opentracing.ScopeManager
 import io.opentracing.Span
 import io.opentracing.noop.NoopScopeManager
-import java.util.*
+import java.util.Stack
 
 
 internal val threadLocalSpanStack = ThreadLocal<Stack<Span>>()

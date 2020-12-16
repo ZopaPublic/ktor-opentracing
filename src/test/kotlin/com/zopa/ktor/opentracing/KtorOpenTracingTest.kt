@@ -35,7 +35,7 @@ import java.util.Stack
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
-class KtorOpenTracingTest  {
+class KtorOpenTracingTest {
     val mockTracer = MockTracer(ThreadContextElementScopeManager())
 
     @BeforeEach
@@ -290,11 +290,11 @@ class KtorOpenTracingTest  {
 
     @Test
     fun `UuidFromPath returns path with UUID and uuid if UUID in path`() {
-        val path = "/evidence/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
+        val path = "/evidence/AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F"
 
         val pathUuid = path.UuidFromPath()
 
         assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
-        assertThat(pathUuid.uuid).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
+        assertThat(pathUuid.uuid).isEqualTo("AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
     }
 }
