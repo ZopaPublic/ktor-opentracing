@@ -29,7 +29,7 @@ GlobalTracer.registerIfAbsent(tracer)
 ```
  
 At this stage, the application will be creating a single span for the duration of the request. 
-If the incoming request has tracing tracing context in its HTTP headers, then the span will be a child of the one in that context. 
+If the incoming request has tracing context in its HTTP headers, then the span will be a child of the one in that context. 
 Otherwise, the feature will start a new trace. 
 
 
