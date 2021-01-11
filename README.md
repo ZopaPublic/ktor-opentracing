@@ -98,7 +98,7 @@ Using [jcenter](https://bintray.com/bintray/jcenter).
 Add the following dependency to your `pom.xml`:
 ```xml
 <dependency>
- <groupId>com.zopa</groupId>
+ <groupId>com.github.fstien</groupId>
  <artifactId>ktor-opentracing</artifactId>
  <version>VERSION_NUMBER</version>
 </dependency>
@@ -108,7 +108,7 @@ Add the following dependency to your `pom.xml`:
 Add the following to your `dependencies` in your `build.gradle` 
  
 ```
-implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
+implementation "com.github.fstien:ktor-opentracing:VERSION_NUMBER"
 ```
 
 ## Examples
