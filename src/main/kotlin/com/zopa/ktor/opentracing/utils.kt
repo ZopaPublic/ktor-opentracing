@@ -14,18 +14,6 @@ import kotlin.coroutines.coroutineContext
 
 val log = KotlinLogging.logger { }
 
-inline fun <T> span(name: String = "defaultSpanName", block: Span.() -> T): T {
-    val tracer = getGlobalTracer()
-    val span = tracer.buildSpan(name).start()
-    try {
-        tracer.scopeManager().activate(span).use { scope ->
-            return block(span)
-        }
-    } finally {
-        span.finish()
-    }
-}
-
 internal data class PathUuid(val path: String, val uuid: String?)
 internal fun String.UuidFromPath(): PathUuid {
     val match = """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex().find(this)
@@ -41,8 +29,8 @@ internal fun String.UuidFromPath(): PathUuid {
 
 fun getGlobalTracer(): Tracer {
     return GlobalTracer.get()
-            ?: NoopTracerFactory.create()
-                    .also { log.warn("Tracer not registered in GlobalTracer. Using Noop tracer instead.") }
+        ?: NoopTracerFactory.create()
+            .also { log.warn("Tracer not registered in GlobalTracer. Using Noop tracer instead.") }
 }
 
 internal suspend fun Span.addCleanup() {

@@ -3,6 +3,7 @@ package com.zopa.ktor.opentracing
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.client.HttpClient
@@ -58,8 +59,7 @@ class KtorOpenTracingTest {
             }
         }
 
-        handleRequest(HttpMethod.Get, path) {}
-        .let { call ->
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
             assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
             with(mockTracer.finishedSpans()) {
@@ -222,8 +222,7 @@ class KtorOpenTracingTest {
             }
         }
 
-        handleRequest(HttpMethod.Get, path) {}
-        .let { call ->
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
             assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
             with(mockTracer.finishedSpans()) {
@@ -271,8 +270,7 @@ class KtorOpenTracingTest {
             }
         }
 
-        handleRequest(HttpMethod.Get, path) {}
-        .let { call ->
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
             assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
             with(mockTracer.finishedSpans()) {
@@ -394,5 +392,19 @@ class KtorOpenTracingTest {
                 assertThat(span10GrandChild.parentId()).isEqualTo(span10Child.context().spanId())
             }
         }
+    }
+
+    @Test
+    fun `ThreadContextElementScopeManager creates a new span stack if threadLocalSpanStack is null`() {
+        val scopeManager = ThreadContextElementScopeManager()
+        threadLocalSpanStack.set(null)
+
+        val span = mockTracer.buildSpan("first-span").start()
+        scopeManager.activate(span)
+
+        val spanStack = threadLocalSpanStack.get()
+        assertThat(spanStack).isNotNull()
+        assertThat(spanStack.size).isEqualTo(1)
+        assertThat(spanStack.peek()).isEqualTo(span)
     }
 }
