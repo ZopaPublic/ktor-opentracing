@@ -23,7 +23,7 @@ class ThreadContextElementScopeManager: ScopeManager {
 
     override fun activeSpan(): Span? {
         val spanStack = threadLocalSpanStack.get() ?: return null
-        return if (spanStack.isEmpty()) null else spanStack.peek()
+        return if (spanStack.isNotEmpty()) spanStack.peek() else null
     }
 }
 
@@ -35,7 +35,9 @@ internal class CoroutineThreadLocalScope: Scope {
             return
         }
 
-        spanStack.pop()
+        if (spanStack.isNotEmpty()) {
+            spanStack.pop()
+        }
     }
 }
 
