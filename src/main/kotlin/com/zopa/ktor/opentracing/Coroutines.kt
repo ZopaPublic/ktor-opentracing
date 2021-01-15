@@ -14,11 +14,13 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 
 fun tracingContext(): CoroutineContext {
-    val activeSpan: Span? = threadLocalSpanStack.get()?.peek()
+    val activeSpan: Span? = getGlobalTracer().scopeManager().activeSpan()
+
     val spanStack = Stack<Span>()
     if (activeSpan != null) {
         spanStack.push(activeSpan)
     }
+
     return threadLocalSpanStack.asContextElement(spanStack)
 }
 

@@ -3,7 +3,6 @@ package com.zopa.ktor.opentracing
 import io.opentracing.Scope
 import io.opentracing.ScopeManager
 import io.opentracing.Span
-import io.opentracing.noop.NoopScopeManager
 import java.util.Stack
 
 
@@ -11,11 +10,13 @@ internal val threadLocalSpanStack = ThreadLocal<Stack<Span>>()
 
 class ThreadContextElementScopeManager: ScopeManager {
     override fun activate(span: Span?): Scope {
-        val spanStack = threadLocalSpanStack.get()
+        var spanStack = threadLocalSpanStack.get()
+
         if (spanStack == null) {
-            log.error { "spanStack is null" }
-            return NoopScopeManager.NoopScope.INSTANCE
+            spanStack = Stack<Span>()
+            threadLocalSpanStack.set(spanStack)
         }
+
         spanStack.push(span)
         return CoroutineThreadLocalScope()
     }
