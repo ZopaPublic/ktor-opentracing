@@ -13,6 +13,7 @@ class ThreadContextElementScopeManager: ScopeManager {
         var spanStack = threadLocalSpanStack.get()
 
         if (spanStack == null) {
+            log.info { "Span stack is null, instantiating a new one." }
             spanStack = Stack<Span>()
             threadLocalSpanStack.set(spanStack)
         }
