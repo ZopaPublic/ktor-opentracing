@@ -26,17 +26,27 @@ inline fun <T> span(name: String = "defaultSpanName", block: Span.() -> T): T {
     }
 }
 
-internal data class PathUuid(val path: String, val uuid: String?)
-internal fun String.UuidFromPath(): PathUuid {
-    val match = """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex().find(this)
+internal val uuidTagAndReplace = Pair(
+        "UUID",
+        """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex()
+)
 
-    if (match == null)
-        return PathUuid(this, null)
-    else {
-        val uuid = match.value
-        val pathWithReplacement = this.replace(uuid, "<UUID>")
-        return PathUuid(pathWithReplacement, uuid)
+internal data class PathAndTags(val path: String, val tags: Map<String, String>)
+
+internal fun String.toPathAndTags(regexReplaces: Map<String, Regex>): PathAndTags {
+    var path = this
+    val tags = mutableMapOf<String, String>()
+
+    regexReplaces.forEach { regexReplace ->
+        val matches = regexReplace.value.findAll(path)
+        var counter = -2
+        matches.forEach { match ->
+            val tagName = regexReplace.key + if (++counter < 0) "" else "_$counter"
+            tags[tagName] = match.value
+            path = path.replace(match.value, "<${tagName}>")
+        }
     }
+    return PathAndTags(path, tags)
 }
 
 fun getGlobalTracer(): Tracer {
@@ -60,7 +70,8 @@ internal suspend fun Span.addCleanup() {
 /*
     Helper function to name spans. Should only be used in method of a class as such:
     classAndMethodName(this, object {})
-    Note that this function will give unexpected results if used in regular functions, extension functions and init functions. For these spans, it is preferable to define span names explicitly.
+    Note that this function will give unexpected results if used in functions outside of a class, extension functions
+    and init functions. For these spans, it is preferable to define span names explicitly.
 */
 fun classAndMethodName(
         currentInstance: Any,

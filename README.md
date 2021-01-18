@@ -83,13 +83,26 @@ We recommend using this feature in a server that has `OpenTracingServer` install
 
 ## Configuration 
 
-Your application might be serving static content (such as k8s probes), for which you do not to create traces. 
+### filter
+Your application might be serving static content (such as k8s probes), for which you do not want to create traces. 
 You can filter these out as follows:
 ```kotlin
 install(OpenTracingServer) {
     filter { call -> call.request.path().startsWith("/_probes") }
 }
 ```
+
+### tagAndReplace
+When an API path contains some kind of id, it can be helpful to replace it with a constant string, so that similar spans
+are named the same and grouped together. The contents of the id is then tagged so that information is not lost.
+```kotlin
+install(OpenTracingServer) {
+    tagAndReplace("customId", Regex("""[0-9]{8}-[0-9]{4}"""))
+}
+```
+In the above example, `/path/12345678-1234` would be recorded as `/path/<customId>` with the tag `customId=12345678-1234`.
+
+Note that UUIDs are already tagged and replaced by default.
 
 ## Installation 
 Using [jcenter](https://bintray.com/bintray/jcenter).

@@ -10,14 +10,23 @@ import io.opentracing.propagation.Format
 import io.opentracing.tag.Tags
 
 
-class OpenTracingClient {
-    class Config
+class OpenTracingClient(
+        val toBeTaggedAndReplaced: Map<String, Regex>
+) {
+    class Configuration {
+        val toBeTaggedAndReplaced: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
 
-    companion object : HttpClientFeature<Config, OpenTracingClient> {
+        fun tagAndReplace(tagName: String, regex: Regex) {
+            toBeTaggedAndReplaced[tagName] = regex
+        }
+    }
+
+    companion object : HttpClientFeature<Configuration, OpenTracingClient> {
         override val key: AttributeKey<OpenTracingClient> = AttributeKey("OpenTracingClient")
 
-        override fun prepare(block: Config.() -> Unit): OpenTracingClient {
-            return OpenTracingClient()
+        override fun prepare(configure: Configuration.() -> Unit): OpenTracingClient {
+            val config = OpenTracingClient.Configuration().apply(configure)
+            return OpenTracingClient(config.toBeTaggedAndReplaced)
         }
 
         override fun install(feature: OpenTracingClient, scope: HttpClient) {
@@ -31,11 +40,14 @@ class OpenTracingClient {
                     return@intercept
                 }
 
-                val pathUuid: PathUuid = context.url.encodedPath.UuidFromPath()
-                val name = "Call to ${context.method.value} ${context.url.host}${pathUuid.path}"
+                val pathAndTags = context.url.encodedPath.toPathAndTags(feature.toBeTaggedAndReplaced)
+                val name = "Call to ${context.method.value} ${context.url.host}${pathAndTags.path}"
 
                 val spanBuilder = tracer.buildSpan(name)
-                if (pathUuid.uuid != null) spanBuilder.withTag("UUID", pathUuid.uuid)
+                pathAndTags.tags.forEach { tag ->
+                    spanBuilder.withTag(tag.key, tag.value)
+                }
+
                 if (spanStack.isNotEmpty()) spanBuilder?.asChildOf(spanStack.peek())
                 val span = spanBuilder?.start()
                 span?.addCleanup()
