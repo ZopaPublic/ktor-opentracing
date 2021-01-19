@@ -1,5 +1,8 @@
 package com.zopa.ktor.opentracing
 
+import assertk.assertThat
+import assertk.assertions.contains
+import assertk.assertions.isEqualTo
 import com.zopa.ktor.opentracing.utils.mockTracer
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -27,7 +30,7 @@ class OpenTracingClientTest {
     }
 
     @Test
-    fun `Client passes trace context in headers`() {
+    fun `Client passes trace context in headers and tags uuids`() {
         val client = HttpClient(MockEngine) {
             install(OpenTracingClient)
             engine {
@@ -52,9 +55,16 @@ class OpenTracingClientTest {
         assertDoesNotThrow {
             runBlocking {
                 withContext(threadLocalSpanStack.asContextElement(spanStack)) {
-                    client.request<String>("/")
+                    client.request<String>("/4DCA6409-D958-417E-B4DD-20738C721C48/view")
                 }
             }
+        }
+
+        with(mockTracer.finishedSpans()) {
+            assertThat(size).isEqualTo(1)
+            assertThat(first().tags()).contains(Pair("span.kind", "client"))
+            assertThat(first().operationName()).isEqualTo("Call to GET localhost<UUID>/view")
+            assertThat(first().tags()).contains(Pair("UUID","4DCA6409-D958-417E-B4DD-20738C721C48"))
         }
     }
 }
