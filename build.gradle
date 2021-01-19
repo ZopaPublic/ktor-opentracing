@@ -50,9 +50,9 @@ test {
 publish {
     userOrg = 'fstien'
     repoName = 'ktor-opentracing'
-    groupId = 'com.zopa'
+    groupId = 'com.github.fstien'
     artifactId = 'ktor-opentracing'
-    publishVersion = '0.2.0'
+    publishVersion = '0.2.1'
     desc = 'Ktor features for OpenTracing instrumentation.'
     website = 'https://github.com/zopaUK/ktor-opentracing'
 }
