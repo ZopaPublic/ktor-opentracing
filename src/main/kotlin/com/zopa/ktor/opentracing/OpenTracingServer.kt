@@ -22,18 +22,18 @@ import java.util.Stack
 
 class OpenTracingServer(
         val filters: List<(ApplicationCall) -> Boolean>,
-        val toBeTaggedAndReplaced: Map<String, Regex>
+        val tagsToExtractFromPath: Map<String, Regex>
 ) {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
-        val toBeTaggedAndReplaced: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
+        val tagsToExtractFromPath: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
 
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
-        fun tagAndReplace(tagName: String, regex: Regex) {
-            toBeTaggedAndReplaced[tagName] = regex
+        fun extractTagFromPath(tagName: String, regex: Regex) {
+            tagsToExtractFromPath[tagName] = regex
         }
     }
 
@@ -42,7 +42,7 @@ class OpenTracingServer(
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
-            val feature = OpenTracingServer(config.filters, config.toBeTaggedAndReplaced)
+            val feature = OpenTracingServer(config.filters, config.tagsToExtractFromPath)
 
             val tracer: Tracer = getGlobalTracer()
 
@@ -61,14 +61,14 @@ class OpenTracingServer(
                 val clientSpanContext: SpanContext? = tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
                 if (clientSpanContext == null) log.info("Tracing context could not be found in request headers. Starting a new server trace.")
 
-                val pathAndTags = context.request.path().toPathAndTags(feature.toBeTaggedAndReplaced)
-                val spanName = "${context.request.httpMethod.value} ${pathAndTags.path}"
+                val (path, tagsFromPath) = context.request.path().toPathAndTags(feature.tagsToExtractFromPath)
+                val spanName = "${context.request.httpMethod.value} $path"
 
                 val spanBuilder = tracer
                     .buildSpan(spanName)
                     .withTag(Tags.SPAN_KIND.key, Tags.SPAN_KIND_SERVER)
 
-                pathAndTags.tags.forEach { tag ->
+                tagsFromPath.forEach { tag ->
                     spanBuilder.withTag(tag.key, tag.value)
                 }
                 if (clientSpanContext != null) spanBuilder.asChildOf(clientSpanContext)

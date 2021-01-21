@@ -63,7 +63,7 @@ class UtilsTest {
     }
 
     @Test
-    fun `toPathAndTags with uuid regex replaces and tags uuids`() {
+    fun `toPathAndTags with uuid regex extracts uuids from path`() {
         val path = "/path/EDF591BA-D318-4F42-8749-4E06F01772BA/view"
         val tagsToMatch = mapOf(uuidTagAndReplace)
 
@@ -85,7 +85,7 @@ class UtilsTest {
     }
 
     @Test
-    fun `toPathAndTags can tag and replace custom strings`() {
+    fun `toPathAndTags can extract custom strings from path`() {
         val path = "/path/12345678-1234/"
         val tagsToMatch = mapOf(Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()))
 
@@ -96,7 +96,7 @@ class UtilsTest {
     }
 
     @Test
-    fun `toPathAndTags can tag and replace multiple strings`() {
+    fun `toPathAndTags can extract multiple strings from path`() {
         val path = "/path/12345678-1234/abc123XYZ/hello"
         val tagsToMatch = mapOf(
                 Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()),
@@ -113,9 +113,9 @@ class UtilsTest {
     }
 
     @Test
-    fun `toPathAndTags can tag and replace multiple occurrences of the same pattern`() {
+    fun `toPathAndTags can extract multiple occurrences of the same pattern from path`() {
         val path = "/path/af826428-4fef-4ea1-aa7f-79faba01006d/and/9ec3922f-86bc-44a3-8a0a-b6aa4d13ee0a/4185c0da-6043-46ac-8432-555066f221c6"
-        val tagsToMatch = OpenTracingServer.Configuration().toBeTaggedAndReplaced
+        val tagsToMatch = OpenTracingServer.Configuration().tagsToExtractFromPath
 
         val pathAndTags = path.toPathAndTags(tagsToMatch)
 
@@ -126,5 +126,4 @@ class UtilsTest {
                 Pair("UUID_1", "4185c0da-6043-46ac-8432-555066f221c6")
         ))
     }
-
 }

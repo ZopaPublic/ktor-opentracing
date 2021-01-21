@@ -11,22 +11,22 @@ import io.opentracing.tag.Tags
 
 
 class OpenTracingClient(
-        val toBeTaggedAndReplaced: Map<String, Regex>
+        val tagsToExtractFromPath: Map<String, Regex>
 ) {
     class Configuration {
-        val toBeTaggedAndReplaced: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
+        val tagsToExtractFromPath: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
 
-        fun tagAndReplace(tagName: String, regex: Regex) {
-            toBeTaggedAndReplaced[tagName] = regex
+        fun extractTagFromPath(tagName: String, regex: Regex) {
+            tagsToExtractFromPath[tagName] = regex
         }
     }
 
     companion object : HttpClientFeature<Configuration, OpenTracingClient> {
         override val key: AttributeKey<OpenTracingClient> = AttributeKey("OpenTracingClient")
 
-        override fun prepare(configure: Configuration.() -> Unit): OpenTracingClient {
-            val config = OpenTracingClient.Configuration().apply(configure)
-            return OpenTracingClient(config.toBeTaggedAndReplaced)
+        override fun prepare(block: Configuration.() -> Unit): OpenTracingClient {
+            val config = OpenTracingClient.Configuration().apply(block)
+            return OpenTracingClient(config.tagsToExtractFromPath)
         }
 
         override fun install(feature: OpenTracingClient, scope: HttpClient) {
@@ -40,11 +40,11 @@ class OpenTracingClient(
                     return@intercept
                 }
 
-                val pathAndTags = context.url.encodedPath.toPathAndTags(feature.toBeTaggedAndReplaced)
-                val name = "Call to ${context.method.value} ${context.url.host}${pathAndTags.path}"
+                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(feature.tagsToExtractFromPath)
+                val name = "Call to ${context.method.value} ${context.url.host}$path"
 
                 val spanBuilder = tracer.buildSpan(name)
-                pathAndTags.tags.forEach { tag ->
+                tagsFromPath.forEach { tag ->
                     spanBuilder.withTag(tag.key, tag.value)
                 }
 
