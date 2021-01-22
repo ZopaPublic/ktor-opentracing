@@ -92,12 +92,12 @@ install(OpenTracingServer) {
 }
 ```
 
-### extractTagFromPath
+### replaceInPathAndTagSpan
 When an API path contains some kind of id, it can be helpful to replace it with a constant string, so that similar spans
 are named the same and grouped together. The contents of the id is then tagged so that information is not lost.
 ```kotlin
 install(OpenTracingServer) {
-    extractTagFromPath("customId", Regex("""[0-9]{8}-[0-9]{4}"""))
+    replaceInPathAndTagSpan(Regex("""[0-9]{8}-[0-9]{4}"""), "customId")
 }
 ```
 In the above example, `/path/12345678-1234` would be recorded as `/path/<customId>` with the tag `customId=12345678-1234`.

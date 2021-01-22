@@ -22,18 +22,18 @@ import java.util.Stack
 
 class OpenTracingServer(
         val filters: List<(ApplicationCall) -> Boolean>,
-        val tagsToExtractFromPath: Map<String, Regex>
+        val regexToReplaceInPathAndTagSpan: Map<String, Regex>
 ) {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
-        val tagsToExtractFromPath: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
+        val regexToReplaceInPathAndTagSpan: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
 
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
-        fun extractTagFromPath(tagName: String, regex: Regex) {
-            tagsToExtractFromPath[tagName] = regex
+        fun replaceInPathAndTagSpan(regex: Regex, tagName: String) {
+            regexToReplaceInPathAndTagSpan[tagName] = regex
         }
     }
 
@@ -42,7 +42,7 @@ class OpenTracingServer(
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
-            val feature = OpenTracingServer(config.filters, config.tagsToExtractFromPath)
+            val feature = OpenTracingServer(config.filters, config.regexToReplaceInPathAndTagSpan)
 
             val tracer: Tracer = getGlobalTracer()
 
@@ -61,7 +61,7 @@ class OpenTracingServer(
                 val clientSpanContext: SpanContext? = tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
                 if (clientSpanContext == null) log.info("Tracing context could not be found in request headers. Starting a new server trace.")
 
-                val (path, tagsFromPath) = context.request.path().toPathAndTags(feature.tagsToExtractFromPath)
+                val (path, tagsFromPath) = context.request.path().toPathAndTags(feature.regexToReplaceInPathAndTagSpan)
                 val spanName = "${context.request.httpMethod.value} $path"
 
                 val spanBuilder = tracer

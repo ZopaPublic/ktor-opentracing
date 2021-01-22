@@ -11,13 +11,13 @@ import io.opentracing.tag.Tags
 
 
 class OpenTracingClient(
-        val tagsToExtractFromPath: Map<String, Regex>
+        val regexToReplaceInPathAndTagSpan: Map<String, Regex>
 ) {
     class Configuration {
-        val tagsToExtractFromPath: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
+        val regexToReplaceInPathAndTagSpan: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
 
-        fun extractTagFromPath(tagName: String, regex: Regex) {
-            tagsToExtractFromPath[tagName] = regex
+        fun replaceInPathAndTagSpan(tagName: String, regex: Regex) {
+            regexToReplaceInPathAndTagSpan[tagName] = regex
         }
     }
 
@@ -26,7 +26,7 @@ class OpenTracingClient(
 
         override fun prepare(block: Configuration.() -> Unit): OpenTracingClient {
             val config = OpenTracingClient.Configuration().apply(block)
-            return OpenTracingClient(config.tagsToExtractFromPath)
+            return OpenTracingClient(config.regexToReplaceInPathAndTagSpan)
         }
 
         override fun install(feature: OpenTracingClient, scope: HttpClient) {
@@ -40,7 +40,7 @@ class OpenTracingClient(
                     return@intercept
                 }
 
-                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(feature.tagsToExtractFromPath)
+                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(feature.regexToReplaceInPathAndTagSpan)
                 val name = "Call to ${context.method.value} ${context.url.host}$path"
 
                 val spanBuilder = tracer.buildSpan(name)
