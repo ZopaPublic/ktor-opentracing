@@ -1,9 +1,9 @@
 package com.zopa.ktor.opentracing
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
-import com.zopa.ktor.opentracing.utils.mockTracer
 import assertk.assertions.isNotNull
 import io.ktor.application.call
 import io.ktor.application.install
@@ -11,6 +11,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
+import io.ktor.client.request.request
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.request.path
@@ -19,20 +20,27 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
+import io.opentracing.Span
+import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
 import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.util.GlobalTracer
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.awaitAll
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
+import java.util.Stack
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
-class OpenTracingServerTest {
+class KtorOpenTracingTest {
+    val mockTracer = MockTracer(ThreadContextElementScopeManager())
 
     @BeforeEach
     fun setup() {
@@ -279,6 +287,108 @@ class OpenTracingServerTest {
                 assertThat(last().tags().get("span.kind")).isEqualTo("server")
             }
         }
+    }
+
+    @Test
+    fun `Client passes trace context in headers and tags uuids`() {
+        val client = HttpClient(MockEngine) {
+            install(OpenTracingClient)
+            engine {
+                addHandler { request ->
+                    val headers = request.headers.entries()
+                            .filter { (_, values) -> values.isNotEmpty() }
+                            .map { (key, values) -> key to values.first() }
+                            .toMap()
+
+                    if (headers.containsKey("traceid"))
+                        respond("OK", HttpStatusCode.OK)
+                    else
+                        throw IllegalStateException("Unhandled request")
+                }
+            }
+        }
+
+        val span = mockTracer.buildSpan("block-span").start()
+        val spanStack = Stack<Span>()
+        spanStack.push(span)
+
+        assertDoesNotThrow { runBlocking {
+            withContext(threadLocalSpanStack.asContextElement(spanStack)) {
+                client.request<String>("/4DCA6409-D958-417E-B4DD-20738C721C48/view")
+            }
+        } }
+
+        with(mockTracer.finishedSpans()) {
+            assertThat(size).isEqualTo(1)
+            assertThat(first().tags()).contains(Pair("span.kind", "client"))
+            assertThat(first().operationName()).isEqualTo("Call to GET localhost<UUID>/view")
+            assertThat(first().tags()).contains(Pair("UUID","4DCA6409-D958-417E-B4DD-20738C721C48"))
+        }
+    }
+
+    @Test
+    fun `toPathAndTags with uuid regex replaces and tags uuids`() {
+        val path = "/path/EDF591BA-D318-4F42-8749-4E06F01772BA/view"
+        val tagsToMatch = mapOf(uuidTagAndReplace)
+
+        val pathAndTags = path.toPathAndTags(tagsToMatch)
+
+        assertThat(pathAndTags.path).isEqualTo("/path/<UUID>/view")
+        assertThat(pathAndTags.tags).isEqualTo(mapOf(Pair("UUID", "EDF591BA-D318-4F42-8749-4E06F01772BA")))
+    }
+
+    @Test
+    fun `toPathAndTags with uuid regex returns path unchanged and no tags if no uuids present`() {
+        val path = "/path/view"
+        val tagsToMatch = mapOf(uuidTagAndReplace)
+
+        val pathAndTags = path.toPathAndTags(tagsToMatch)
+
+        assertThat(pathAndTags.path).isEqualTo(path)
+        assertThat(pathAndTags.tags).isEqualTo(emptyMap())
+    }
+
+    @Test
+    fun `toPathAndTags can tag and replace custom strings`() {
+        val path = "/path/12345678-1234/"
+        val tagsToMatch = mapOf(Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()))
+
+        val pathAndTags = path.toPathAndTags(tagsToMatch)
+
+        assertThat(pathAndTags.path).isEqualTo("/path/<customId>/")
+        assertThat(pathAndTags.tags).isEqualTo(mapOf(Pair("customId", "12345678-1234")))
+    }
+
+    @Test
+    fun `toPathAndTags can tag and replace multiple strings`() {
+        val path = "/path/12345678-1234/abc123XYZ/hello"
+        val tagsToMatch = mapOf(
+                Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()),
+                Pair("otherField", """[a-z]{3}[0-9]{3}[A-Z]{3}""".toRegex())
+        )
+
+        val pathAndTags = path.toPathAndTags(tagsToMatch)
+
+        assertThat(pathAndTags.path).isEqualTo("/path/<customId>/<otherField>/hello")
+        assertThat(pathAndTags.tags).isEqualTo(mapOf(
+                Pair("customId", "12345678-1234"),
+                Pair("otherField", "abc123XYZ")
+        ))
+    }
+
+    @Test
+    fun `toPathAndTags can tag and replace multiple occurrences of the same pattern`() {
+        val path = "/path/af826428-4fef-4ea1-aa7f-79faba01006d/and/9ec3922f-86bc-44a3-8a0a-b6aa4d13ee0a/4185c0da-6043-46ac-8432-555066f221c6"
+        val tagsToMatch = mapOf(uuidTagAndReplace)
+
+        val pathAndTags = path.toPathAndTags(tagsToMatch)
+
+        assertThat(pathAndTags.path).isEqualTo("/path/<UUID>/and/<UUID_0>/<UUID_1>")
+        assertThat(pathAndTags.tags).isEqualTo(mapOf(
+                Pair("UUID", "af826428-4fef-4ea1-aa7f-79faba01006d"),
+                Pair("UUID_0", "9ec3922f-86bc-44a3-8a0a-b6aa4d13ee0a"),
+                Pair("UUID_1", "4185c0da-6043-46ac-8432-555066f221c6")
+        ))
     }
 
     @Test
