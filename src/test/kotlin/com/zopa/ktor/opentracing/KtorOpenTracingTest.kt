@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import java.util.Stack
+import java.util.UUID
 import kotlin.math.sqrt
 
 @TestInstance(Lifecycle.PER_CLASS)
@@ -161,6 +162,37 @@ class KtorOpenTracingTest {
     }
 
     @Test
+    fun `Included tag is added properly to the span`() = withTestApplication {
+
+        val path = "/greeting/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
+
+        val correlationId = UUID.randomUUID().toString()
+        val tagName = "correlationId"
+
+        application.install(OpenTracingServer) {
+            addTag(tagName) { correlationId }
+        }
+
+        application.routing {
+            get(path) {
+                fun greeting(): String = span("greeting") {
+                    return "hello"
+                }
+
+                call.respond(greeting())
+            }
+        }
+
+        handleRequest(HttpMethod.Get, path) {}
+                .let { call ->
+                    assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+                    assertThat(mockTracer.finishedSpans().size).isEqualTo(2)
+                    assertThat(mockTracer.finishedSpans().first().tags()[tagName]).isEqualTo(correlationId)
+                    assertThat(mockTracer.finishedSpans().last().tags()[tagName]).isEqualTo(correlationId)
+                }
+    }
+
+    @Test
     fun `Create server span as child of span context in request headers`() = withTestApplication {
         val path = "/greeting"
 
@@ -214,7 +246,7 @@ class KtorOpenTracingTest {
                 }
 
                 val sqrt: Double = sqrtOfInt(2)
-                val sqrtSuspend: Double = runBlocking<Double> {
+                val sqrtSuspend: Double = runBlocking {
                     sqrtOfIntSuspend(10)
                 }
 
