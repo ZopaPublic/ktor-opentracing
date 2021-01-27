@@ -100,7 +100,7 @@ install(OpenTracingServer) {
     replaceInPathAndTagSpan(Regex("""[0-9]{8}-[0-9]{4}"""), "customId")
 }
 ```
-In the above example, `/path/12345678-1234` would be recorded as `/path/<customId>` with the tag `customId=12345678-1234`.
+In the above example, `/path/12345678-1234` would lead to a span named as `/path/<customId>` with the tag `customId=12345678-1234`.
 
 Note that UUIDs are already tagged and replaced by default.
 
