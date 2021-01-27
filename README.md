@@ -94,7 +94,7 @@ install(OpenTracingServer) {
 
 ### replaceInPathAndTagSpan
 When a request path contains an id, you can replace it with a constant string in the span operation name. This ensures that requests for different ids have the same span operation name. 
-are named the same and grouped together. The contents of the id is then tagged so that information is not lost.
+The value of the id is then tagged on the span. 
 ```kotlin
 install(OpenTracingServer) {
     replaceInPathAndTagSpan(Regex("""[0-9]{8}-[0-9]{4}"""), "customId")
