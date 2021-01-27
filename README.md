@@ -93,16 +93,16 @@ install(OpenTracingServer) {
 ```
 
 ### replaceInPathAndTagSpan
-When an API path contains some kind of id, it can be helpful to replace it with a constant string, so that similar spans
-are named the same and grouped together. The contents of the id is then tagged so that information is not lost.
+When a request path contains an id, you can replace it with a constant string in the span operation name. This ensures that requests for different ids have the same span operation name. 
+The value of the id is then tagged on the span. 
 ```kotlin
 install(OpenTracingServer) {
     replaceInPathAndTagSpan(Regex("""[0-9]{8}-[0-9]{4}"""), "customId")
 }
 ```
-In the above example, `/path/12345678-1234` would be recorded as `/path/<customId>` with the tag `customId=12345678-1234`.
+In the above example, `/path/12345678-1234` would lead to a span named as `/path/<customId>` with the tag `customId=12345678-1234`.
 
-Note that UUIDs are already tagged and replaced by default.
+Note that UUIDs are already tagged and replaced by default with `UUID`.
 
 ## Installation 
 Using [jcenter](https://bintray.com/bintray/jcenter).
@@ -134,4 +134,3 @@ implementation "com.github.fstien:ktor-opentracing:VERSION_NUMBER"
 
 - For Ktor services using [kotlin-logging](https://github.com/MicroUtils/kotlin-logging), you can use [kotlin-logging-opentracing-decorator](https://github.com/fstien/kotlin-logging-opentracing-decorator) to enrich your spans with logs. 
 - If you are using [Exposed](https://github.com/JetBrains/Exposed), you can use [Exposed-OpenTracing](https://github.com/fstien/Exposed-OpenTracing) to instrument database transactions.
-
