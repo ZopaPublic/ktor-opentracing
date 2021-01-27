@@ -93,7 +93,7 @@ install(OpenTracingServer) {
 ```
 
 ### replaceInPathAndTagSpan
-When an API path contains some kind of id, it can be helpful to replace it with a constant string, so that similar spans
+When a request path contains an id, you can replace it with a constant string in the span operation name. This ensures that requests for different ids have the same span operation name. 
 are named the same and grouped together. The contents of the id is then tagged so that information is not lost.
 ```kotlin
 install(OpenTracingServer) {
@@ -134,4 +134,3 @@ implementation "com.github.fstien:ktor-opentracing:VERSION_NUMBER"
 
 - For Ktor services using [kotlin-logging](https://github.com/MicroUtils/kotlin-logging), you can use [kotlin-logging-opentracing-decorator](https://github.com/fstien/kotlin-logging-opentracing-decorator) to enrich your spans with logs. 
 - If you are using [Exposed](https://github.com/JetBrains/Exposed), you can use [Exposed-OpenTracing](https://github.com/fstien/Exposed-OpenTracing) to instrument database transactions.
-
