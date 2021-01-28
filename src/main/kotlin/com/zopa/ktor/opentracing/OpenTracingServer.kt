@@ -19,6 +19,7 @@ import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
 import java.util.Stack
 
+internal lateinit var serverConfig: OpenTracingServer.Configuration
 
 class OpenTracingServer(
         val filters: List<(ApplicationCall) -> Boolean>,
@@ -45,6 +46,7 @@ class OpenTracingServer(
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
+            serverConfig = config
             val feature = OpenTracingServer(config.filters, config.regexToReplaceInPathAndTagSpan)
 
             val tracer: Tracer = getGlobalTracer()

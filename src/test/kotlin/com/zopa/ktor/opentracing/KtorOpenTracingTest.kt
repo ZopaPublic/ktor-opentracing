@@ -291,7 +291,9 @@ class KtorOpenTracingTest {
     }
 
     @Test
-    fun `Client passes trace context in headers and tags uuids`() {
+    fun `Client passes trace context in headers and tags uuids`() = withTestApplication {
+        application.install(OpenTracingServer)
+
         val client = HttpClient(MockEngine) {
             install(OpenTracingClient)
             engine {
