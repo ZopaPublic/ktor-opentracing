@@ -9,15 +9,14 @@ import io.opentracing.Tracer
 import io.opentracing.propagation.Format
 import io.opentracing.tag.Tags
 
-
 class OpenTracingClient(
-        val regexToReplaceInPathAndTagSpan: Map<String, Regex>
+        val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>>
 ) {
     class Configuration {
-        val regexToReplaceInPathAndTagSpan: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
+        val regexToReplaceInPathAndTagSpan: MutableList<Pair<String, Regex>> = mutableListOf(uuidTagAndReplace)
 
         fun replaceInPathAndTagSpan(tagName: String, regex: Regex) {
-            regexToReplaceInPathAndTagSpan[tagName] = regex
+            regexToReplaceInPathAndTagSpan.add(tagName to regex)
         }
     }
 

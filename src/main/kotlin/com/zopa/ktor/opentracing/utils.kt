@@ -20,15 +20,15 @@ internal val uuidTagAndReplace = Pair(
 
 internal data class PathAndTags(val path: String, val tags: Map<String, String>)
 
-internal fun String.toPathAndTags(regexReplaces: Map<String, Regex>): PathAndTags {
+internal fun String.toPathAndTags(regexReplaces: List<Pair<String, Regex>>): PathAndTags {
     var path = this
     val tags = mutableMapOf<String, String>()
 
     regexReplaces.forEach { regexReplace ->
-        val matches = regexReplace.value.findAll(path)
+        val matches = regexReplace.second.findAll(path)
         var counter = -2
         matches.forEach { match ->
-            val tagName = regexReplace.key + if (++counter < 0) "" else "_$counter"
+            val tagName = regexReplace.first + if (++counter < 0) "" else "_$counter"
             tags[tagName] = match.value
             path = path.replace(match.value, "<${tagName}>")
         }

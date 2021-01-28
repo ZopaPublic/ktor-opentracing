@@ -2,6 +2,7 @@ package com.zopa.ktor.opentracing
 
 import assertk.assertThat
 import assertk.assertions.contains
+import assertk.assertions.containsAll
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
@@ -25,11 +26,11 @@ import io.opentracing.mock.MockTracer
 import io.opentracing.propagation.Format
 import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.util.GlobalTracer
+import kotlinx.coroutines.asContextElement
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.awaitAll
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -329,7 +330,7 @@ class KtorOpenTracingTest {
     @Test
     fun `toPathAndTags with uuid regex replaces and tags uuids`() {
         val path = "/path/EDF591BA-D318-4F42-8749-4E06F01772BA/view"
-        val tagsToMatch = mapOf(uuidTagAndReplace)
+        val tagsToMatch = listOf(uuidTagAndReplace)
 
         val pathAndTags = path.toPathAndTags(tagsToMatch)
 
@@ -340,7 +341,7 @@ class KtorOpenTracingTest {
     @Test
     fun `toPathAndTags with uuid regex returns path unchanged and no tags if no uuids present`() {
         val path = "/path/view"
-        val tagsToMatch = mapOf(uuidTagAndReplace)
+        val tagsToMatch = listOf(uuidTagAndReplace)
 
         val pathAndTags = path.toPathAndTags(tagsToMatch)
 
@@ -351,7 +352,7 @@ class KtorOpenTracingTest {
     @Test
     fun `toPathAndTags can tag and replace custom strings`() {
         val path = "/path/12345678-1234/"
-        val tagsToMatch = mapOf(Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()))
+        val tagsToMatch = listOf(Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()))
 
         val pathAndTags = path.toPathAndTags(tagsToMatch)
 
@@ -362,7 +363,7 @@ class KtorOpenTracingTest {
     @Test
     fun `toPathAndTags can tag and replace multiple strings`() {
         val path = "/path/12345678-1234/abc123XYZ/hello"
-        val tagsToMatch = mapOf(
+        val tagsToMatch = listOf(
                 Pair("customId", """[0-9]{8}-[0-9]{4}""".toRegex()),
                 Pair("otherField", """[a-z]{3}[0-9]{3}[A-Z]{3}""".toRegex())
         )
@@ -379,7 +380,7 @@ class KtorOpenTracingTest {
     @Test
     fun `toPathAndTags can tag and replace multiple occurrences of the same pattern`() {
         val path = "/path/af826428-4fef-4ea1-aa7f-79faba01006d/and/9ec3922f-86bc-44a3-8a0a-b6aa4d13ee0a/4185c0da-6043-46ac-8432-555066f221c6"
-        val tagsToMatch = mapOf(uuidTagAndReplace)
+        val tagsToMatch = listOf(uuidTagAndReplace)
 
         val pathAndTags = path.toPathAndTags(tagsToMatch)
 
@@ -389,6 +390,25 @@ class KtorOpenTracingTest {
                 Pair("UUID_0", "9ec3922f-86bc-44a3-8a0a-b6aa4d13ee0a"),
                 Pair("UUID_1", "4185c0da-6043-46ac-8432-555066f221c6")
         ))
+    }
+
+    @Test
+    fun `regex replacements are applied in order with UUID default last`() {
+        val path = "/path/af826428-4fef-4ea1-aa7f-79faba01006d/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/aaaaaaaa-aaaa-1111-1111-111111111111/"
+
+        val config = OpenTracingServer.Configuration().apply {
+            replaceInPathAndTagSpan("[a-z]{8}-[a-z]{4}-[a-z]{4}-[a-z]{4}-[a-z]{12}".toRegex(), "letters")
+            replaceInPathAndTagSpan("[a-z1]{8}-[a-z1]{4}-[a-z1]{4}-[a-z1]{4}-[a-z1]{12}".toRegex(), "lettersOrOnes")
+        }
+
+        val pathAndTags = path.toPathAndTags(config.regexToReplaceInPathAndTagSpan)
+
+        assertThat(pathAndTags.path).isEqualTo("/path/<UUID>/<letters>/<lettersOrOnes>/")
+        assertThat(pathAndTags.tags).containsAll(
+                Pair("UUID", "af826428-4fef-4ea1-aa7f-79faba01006d"),
+                Pair("lettersOrOnes", "aaaaaaaa-aaaa-1111-1111-111111111111"),
+                Pair("letters", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        )
     }
 
     @Test

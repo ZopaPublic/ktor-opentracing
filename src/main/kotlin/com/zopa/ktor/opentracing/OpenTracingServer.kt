@@ -22,18 +22,21 @@ import java.util.Stack
 
 class OpenTracingServer(
         val filters: List<(ApplicationCall) -> Boolean>,
-        val regexToReplaceInPathAndTagSpan: Map<String, Regex>
+        val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>>
 ) {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
-        val regexToReplaceInPathAndTagSpan: MutableMap<String, Regex> = mutableMapOf(uuidTagAndReplace)
+        private val userDefinedRegexToReplaceInPathAndTagSpan = mutableListOf<Pair<String, Regex>>()
+        val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>> by lazy {
+            userDefinedRegexToReplaceInPathAndTagSpan.plus(uuidTagAndReplace)
+        }
 
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
         fun replaceInPathAndTagSpan(regex: Regex, tagName: String) {
-            regexToReplaceInPathAndTagSpan[tagName] = regex
+            userDefinedRegexToReplaceInPathAndTagSpan.add(tagName to regex)
         }
     }
 
