@@ -83,6 +83,8 @@ We recommend using this feature in a server that has `OpenTracingServer` install
 
 ## Configuration 
 
+#### Filter Requests
+
 Your application might be serving static content (such as k8s probes), for which you do not to create traces. 
 You can filter these out as follows:
 ```kotlin
@@ -91,10 +93,12 @@ install(OpenTracingServer) {
 }
 ```
 
-It is also possible to configure tags to be added to each span in a trace. For example to add the thread name:
+#### Tag Spans
+It is also possible to configure tags to be added to each span in a trace. For example to add the thread name and a correlation id:
 ```kotlin
 install(OpenTracingServer) {
     addTag("threadName") { Thread.currentThread().name }
+    addTag("correlationId") { MDC.get("correlationId") }
 }
 ```
 
