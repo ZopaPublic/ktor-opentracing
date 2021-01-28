@@ -40,6 +40,14 @@ class OpenTracingClient {
                 val span = spanBuilder?.start()
                 span?.addCleanup()
 
+                tagsToAdd.forEach {
+                    try {
+                        span?.setTag(it.first, it.second.invoke())
+                    } catch (e: Exception) {
+                        log.warn(e) { "Could not add tag: ${it.first}" }
+                    }
+                }
+
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT)
                 Tags.HTTP_METHOD.set(span, context.method.value)
                 Tags.HTTP_URL.set(span, "${context.url.host}${context.url.encodedPath}")

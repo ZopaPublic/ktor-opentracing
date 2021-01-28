@@ -91,6 +91,13 @@ install(OpenTracingServer) {
 }
 ```
 
+It is also possible to configure tags to be added to each span in a trace. For example to add the thread name:
+```kotlin
+install(OpenTracingServer) {
+    addTag("threadName") { Thread.currentThread().name }
+}
+```
+
 ## Installation 
 Using [jcenter](https://bintray.com/bintray/jcenter).
  

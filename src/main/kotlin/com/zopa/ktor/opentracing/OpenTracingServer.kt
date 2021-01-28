@@ -25,14 +25,14 @@ class OpenTracingServer {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
 
-        val tagsToAdd = mutableListOf<Pair<String, () -> String>>()
+        val tags = mutableListOf<Pair<String, () -> String>>()
 
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
         fun addTag(name: String, lambda: () -> String) {
-            tagsToAdd.add(Pair(name, lambda))
+            tags.add(Pair(name, lambda))
         }
     }
 
@@ -41,7 +41,7 @@ class OpenTracingServer {
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
-            tagsToAdd = config.tagsToAdd
+            tagsToAdd = config.tags
             val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()
@@ -73,7 +73,7 @@ class OpenTracingServer {
 
                 val span = spanBuilder.start()
 
-                config.tagsToAdd.forEach {
+                config.tags.forEach {
                     try {
                         span.setTag(it.first, it.second.invoke())
                     } catch (e: Exception)  {
