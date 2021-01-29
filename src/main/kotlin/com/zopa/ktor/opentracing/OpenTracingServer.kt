@@ -25,21 +25,22 @@ lateinit var serverConfig: OpenTracingServer.Configuration
 class OpenTracingServer {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
+        val tags = mutableListOf<Pair<String, () -> String>>()
         private val userDefinedRegexToReplaceInPathAndTagSpan = mutableListOf<Pair<String, Regex>>()
         val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>> by lazy {
             userDefinedRegexToReplaceInPathAndTagSpan.plus(uuidTagAndReplace)
         }
 
-        val tags = mutableListOf<Pair<String, () -> String>>()
-
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
-        fun replaceInPathAndTagSpan(regex: Regex, tagName: String) {
-            userDefinedRegexToReplaceInPathAndTagSpan.add(tagName to regex)
         fun addTag(name: String, lambda: () -> String) {
             tags.add(Pair(name, lambda))
+        }
+
+        fun replaceInPathAndTagSpan(regex: Regex, tagName: String) {
+            userDefinedRegexToReplaceInPathAndTagSpan.add(tagName to regex)
         }
     }
 
@@ -73,8 +74,8 @@ class OpenTracingServer {
                 val spanName = "${context.request.httpMethod.value} $path"
 
                 val spanBuilder = tracer
-                    .buildSpan(spanName)
-                    .withTag(Tags.SPAN_KIND.key, Tags.SPAN_KIND_SERVER)
+                        .buildSpan(spanName)
+                        .withTag(Tags.SPAN_KIND.key, Tags.SPAN_KIND_SERVER)
 
                 tagsFromPath.forEach { tag ->
                     spanBuilder.withTag(tag.key, tag.value)
@@ -86,7 +87,7 @@ class OpenTracingServer {
                 config.tags.forEach {
                     try {
                         span.setTag(it.first, it.second.invoke())
-                    } catch (e: Exception)  {
+                    } catch (e: Exception) {
                         log.warn(e) { "Could not add tag: ${it.first}" }
                     }
                 }
@@ -130,9 +131,9 @@ class OpenTracingServer {
 
         private fun Headers.toMap(): MutableMap<String, String> =
                 this.entries()
-                    .filter { (_, values) -> values.isNotEmpty() }
-                    .map { (key, values) -> key to values.first() }
-                    .toMap()
-                    .toMutableMap()
+                        .filter { (_, values) -> values.isNotEmpty() }
+                        .map { (key, values) -> key to values.first() }
+                        .toMap()
+                        .toMutableMap()
     }
 }
