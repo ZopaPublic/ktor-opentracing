@@ -19,7 +19,7 @@ import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
 import java.util.Stack
 
-object ServerConfig {
+object SharedConfig {
     private lateinit var serverConfig: OpenTracingServer.Configuration
     val tags: List<Pair<String, () -> String>> by lazy { serverConfig.tags }
     val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>> by lazy { serverConfig.regexToReplaceInPathAndTagSpan }
@@ -57,7 +57,7 @@ class OpenTracingServer {
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
-            ServerConfig.setServerConfig(config)
+            SharedConfig.setServerConfig(config)
             val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()

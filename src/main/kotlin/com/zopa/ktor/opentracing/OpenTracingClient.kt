@@ -30,7 +30,7 @@ class OpenTracingClient {
                     return@intercept
                 }
 
-                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(ServerConfig.regexToReplaceInPathAndTagSpan)
+                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(SharedConfig.regexToReplaceInPathAndTagSpan)
                 val name = "Call to ${context.method.value} ${context.url.host}$path"
 
                 val spanBuilder = tracer.buildSpan(name)
