@@ -61,7 +61,7 @@ class OpenTracingServer {
             pipeline.insertPhaseAfter(ApplicationCallPipeline.Fallback, tracingPhaseFinish)
 
             pipeline.intercept(tracingPhaseStart) {
-                if (feature.filters.any { it(call) }) return@intercept
+                if (config.filters.any { it(call) }) return@intercept
 
                 val headers: MutableMap<String, String> = call.request.headers.toMap()
                 headers.remove("Authorization")
@@ -69,7 +69,7 @@ class OpenTracingServer {
                 val clientSpanContext: SpanContext? = tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
                 if (clientSpanContext == null) log.info("Tracing context could not be found in request headers. Starting a new server trace.")
 
-                val (path, tagsFromPath) = context.request.path().toPathAndTags(feature.regexToReplaceInPathAndTagSpan)
+                val (path, tagsFromPath) = context.request.path().toPathAndTags(config.regexToReplaceInPathAndTagSpan)
                 val spanName = "${context.request.httpMethod.value} $path"
 
                 val spanBuilder = tracer
