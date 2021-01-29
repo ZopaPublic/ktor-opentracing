@@ -55,7 +55,7 @@ internal suspend fun Span.addCleanup() {
 }
 
 fun Span.addConfiguredTags() {
-    serverConfig.tags.forEach {
+    ServerConfig.tags.forEach {
         try {
             this.setTag(it.first, it.second.invoke())
         } catch (e: Exception) {

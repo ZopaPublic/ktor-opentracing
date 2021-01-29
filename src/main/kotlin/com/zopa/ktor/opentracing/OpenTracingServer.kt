@@ -17,10 +17,18 @@ import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.tag.Tags
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
-import java.lang.Exception
 import java.util.Stack
 
-lateinit var serverConfig: OpenTracingServer.Configuration
+object ServerConfig {
+    private lateinit var serverConfig: OpenTracingServer.Configuration
+    val tags: List<Pair<String, () -> String>> by lazy { serverConfig.tags }
+    val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>> by lazy { serverConfig.regexToReplaceInPathAndTagSpan }
+
+    fun setServerConfig(config: OpenTracingServer.Configuration) {
+        if (this::serverConfig.isInitialized) return
+        serverConfig = config
+    }
+}
 
 class OpenTracingServer {
     class Configuration {
@@ -49,7 +57,7 @@ class OpenTracingServer {
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
-            serverConfig = config
+            ServerConfig.setServerConfig(config)
             val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()
