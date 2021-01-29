@@ -41,14 +41,7 @@ class OpenTracingClient {
                 if (spanStack.isNotEmpty()) spanBuilder?.asChildOf(spanStack.peek())
                 val span = spanBuilder?.start()
                 span?.addCleanup()
-
-                tagsToAdd.forEach {
-                    try {
-                        span?.setTag(it.first, it.second.invoke())
-                    } catch (e: Exception) {
-                        log.warn(e) { "Could not add tag: ${it.first}" }
-                    }
-                }
+                span?.addConfiguredTags()
 
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT)
                 Tags.HTTP_METHOD.set(span, context.method.value)

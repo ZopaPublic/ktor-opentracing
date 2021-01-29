@@ -50,7 +50,6 @@ class OpenTracingServer {
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
             serverConfig = config
-            tagsToAdd = config.tags
             val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()

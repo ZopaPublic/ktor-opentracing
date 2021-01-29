@@ -54,6 +54,16 @@ internal suspend fun Span.addCleanup() {
     }
 }
 
+fun Span.addConfiguredTags() {
+    serverConfig.tags.forEach {
+        try {
+            this.setTag(it.first, it.second.invoke())
+        } catch (e: Exception) {
+            log.warn(e) { "Could not add tag: ${it.first}" }
+        }
+    }
+}
+
 /*
     Helper function to name spans. Should only be used in method of a class as such:
     classAndMethodName(this, object {})
