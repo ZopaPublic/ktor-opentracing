@@ -17,14 +17,12 @@ import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.tag.Tags
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
+import java.lang.Exception
 import java.util.Stack
 
-internal lateinit var serverConfig: OpenTracingServer.Configuration
+lateinit var serverConfig: OpenTracingServer.Configuration
 
-class OpenTracingServer(
-        val filters: List<(ApplicationCall) -> Boolean>,
-        val regexToReplaceInPathAndTagSpan: List<Pair<String, Regex>>
-) {
+class OpenTracingServer {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
         private val userDefinedRegexToReplaceInPathAndTagSpan = mutableListOf<Pair<String, Regex>>()
@@ -32,12 +30,16 @@ class OpenTracingServer(
             userDefinedRegexToReplaceInPathAndTagSpan.plus(uuidTagAndReplace)
         }
 
+        val tags = mutableListOf<Pair<String, () -> String>>()
+
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
         fun replaceInPathAndTagSpan(regex: Regex, tagName: String) {
             userDefinedRegexToReplaceInPathAndTagSpan.add(tagName to regex)
+        fun addTag(name: String, lambda: () -> String) {
+            tags.add(Pair(name, lambda))
         }
     }
 
@@ -47,7 +49,8 @@ class OpenTracingServer(
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
             val config = Configuration().apply(configure)
             serverConfig = config
-            val feature = OpenTracingServer(config.filters, config.regexToReplaceInPathAndTagSpan)
+            tagsToAdd = config.tags
+            val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()
 
@@ -79,6 +82,15 @@ class OpenTracingServer(
                 if (clientSpanContext != null) spanBuilder.asChildOf(clientSpanContext)
 
                 val span = spanBuilder.start()
+
+                config.tags.forEach {
+                    try {
+                        span.setTag(it.first, it.second.invoke())
+                    } catch (e: Exception)  {
+                        log.warn(e) { "Could not add tag: ${it.first}" }
+                    }
+                }
+
                 span.addCleanup()
 
                 val spanStack = Stack<Span>()

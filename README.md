@@ -83,7 +83,8 @@ We recommend using this feature in a server that has `OpenTracingServer` install
 
 ## Configuration 
 
-### filter
+### Filter Requests
+
 Your application might be serving static content (such as k8s probes), for which you do not want to create traces. 
 You can filter these out as follows:
 ```kotlin
@@ -92,7 +93,7 @@ install(OpenTracingServer) {
 }
 ```
 
-### replaceInPathAndTagSpan
+### Replace strings in path using regex
 When a request path contains an id, you can replace it with a constant string in the span operation name. This ensures that requests for different ids have the same span operation name. 
 The value of the id is then tagged on the span. 
 ```kotlin
@@ -103,6 +104,15 @@ install(OpenTracingServer) {
 In the above example, `/path/12345678-1234` would lead to a span named as `/path/<customId>` with the tag `customId=12345678-1234`.
 
 Note that UUIDs are already tagged and replaced by default with `UUID`.
+
+### Tag Spans
+It is also possible to configure tags to be added to each span in a trace. For example to add the thread name and a correlation id:
+```kotlin
+install(OpenTracingServer) {
+    addTag("threadName") { Thread.currentThread().name }
+    addTag("correlationId") { MDC.get("correlationId") }
+}
+```
 
 ## Installation 
 Using [jcenter](https://bintray.com/bintray/jcenter).
