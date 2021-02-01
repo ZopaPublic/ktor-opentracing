@@ -20,7 +20,6 @@ class OpenTracingClient {
         }
 
         override fun install(feature: OpenTracingClient, scope: HttpClient) {
-
             val tracer: Tracer = getGlobalTracer()
 
             scope.sendPipeline.intercept(HttpSendPipeline.State) {
@@ -30,7 +29,7 @@ class OpenTracingClient {
                     return@intercept
                 }
 
-                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(SharedConfig.regexToReplaceInPathAndTagSpan)
+                val (path, tagsFromPath) = context.url.encodedPath.toPathAndTags(OpenTracingServer.config.regexToReplaceInPathAndTagSpan)
                 val name = "Call to ${context.method.value} ${context.url.host}$path"
 
                 val spanBuilder = tracer.buildSpan(name)

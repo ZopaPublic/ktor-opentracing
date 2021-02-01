@@ -55,7 +55,7 @@ internal suspend fun Span.addCleanup() {
 }
 
 fun Span.addConfiguredTags() {
-    SharedConfig.tags.forEach {
+    OpenTracingServer.config.tags.forEach {
         try {
             this.setTag(it.first, it.second.invoke())
         } catch (e: Exception) {
