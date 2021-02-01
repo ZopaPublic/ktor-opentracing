@@ -171,7 +171,7 @@ class KtorOpenTracingTest {
         val tagName = "correlationId"
 
         application.install(OpenTracingServer) {
-            addLambdaTag(tagName) { correlationId }
+            addTag(tagName) { correlationId }
         }
 
         application.routing {
@@ -199,7 +199,7 @@ class KtorOpenTracingTest {
         val tagName = "correlationId"
 
         application.install(OpenTracingServer) {
-            addLambdaTag(tagName) { throw Exception("Corrupted") }
+            addTag(tagName) { throw Exception("Corrupted") }
         }
 
         application.routing {
@@ -354,7 +354,7 @@ class KtorOpenTracingTest {
         val correlationId = UUID.randomUUID().toString()
 
         application.install(OpenTracingServer) {
-            addLambdaTag("correlationId") { correlationId }
+            addTag("correlationId") { correlationId }
         }
 
         val client = HttpClient(MockEngine) {

@@ -29,7 +29,7 @@ class OpenTracingServer {
             filters.add(predicate)
         }
 
-        fun addLambdaTag(name: String, lambda: () -> String) {
+        fun addTag(name: String, lambda: () -> String) {
             lambdaTags.add(Pair(name, lambda))
         }
     }
