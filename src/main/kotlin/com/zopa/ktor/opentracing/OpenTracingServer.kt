@@ -17,31 +17,29 @@ import io.opentracing.propagation.TextMapAdapter
 import io.opentracing.tag.Tags
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
-import java.lang.Exception
 import java.util.Stack
 
 
 class OpenTracingServer {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
-
-        val tags = mutableListOf<Pair<String, () -> String>>()
+        val lambdaTags = mutableListOf<Pair<String, () -> String>>()
 
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
-        fun addTag(name: String, lambda: () -> String) {
-            tags.add(Pair(name, lambda))
+        fun addLambdaTag(name: String, lambda: () -> String) {
+            lambdaTags.add(Pair(name, lambda))
         }
     }
 
     companion object Feature : ApplicationFeature<ApplicationCallPipeline, Configuration, OpenTracingServer> {
         override val key = AttributeKey<OpenTracingServer>("OpenTracingServer")
+        internal var config = Configuration()
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): OpenTracingServer {
-            val config = Configuration().apply(configure)
-            tagsToAdd = config.tags
+            config = Configuration().apply(configure)
             val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()
@@ -73,14 +71,7 @@ class OpenTracingServer {
 
                 val span = spanBuilder.start()
 
-                config.tags.forEach {
-                    try {
-                        span.setTag(it.first, it.second.invoke())
-                    } catch (e: Exception)  {
-                        log.warn(e) { "Could not add tag: ${it.first}" }
-                    }
-                }
-
+                span.addConfiguredLambdaTags()
                 span.addCleanup()
 
                 val spanStack = Stack<Span>()

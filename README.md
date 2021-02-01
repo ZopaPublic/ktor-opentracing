@@ -97,8 +97,8 @@ install(OpenTracingServer) {
 It is also possible to configure tags to be added to each span in a trace. For example to add the thread name and a correlation id:
 ```kotlin
 install(OpenTracingServer) {
-    addTag("threadName") { Thread.currentThread().name }
-    addTag("correlationId") { MDC.get("correlationId") }
+    addLambdaTag("threadName") { Thread.currentThread().name }
+    addLambdaTag("correlationId") { MDC.get("correlationId") }
 }
 ```
 
