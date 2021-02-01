@@ -49,6 +49,7 @@ class KtorOpenTracingTest {
 
     @Test
     fun `Create server span for request without trace context in headers`() = withTestApplication {
+        val definedPath = "/greeting/{id}"
         val path = "/greeting/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
 
         application.install(OpenTracingServer)

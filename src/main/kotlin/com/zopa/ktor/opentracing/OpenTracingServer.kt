@@ -62,7 +62,10 @@ class OpenTracingServer(
                     .buildSpan(spanName)
                     .withTag(Tags.SPAN_KIND.key, Tags.SPAN_KIND_SERVER)
 
-                if (pathUuid.uuid != null) spanBuilder.withTag("UUID", pathUuid.uuid)
+                call.parameters.entries().forEach {
+                    spanBuilder.withTag(it.key, it.value.first())
+                }
+//                if (pathUuid.uuid != null) spanBuilder.withTag("UUID", pathUuid.uuid)
                 if (clientSpanContext != null) spanBuilder.asChildOf(clientSpanContext)
 
                 val span = spanBuilder.start()
