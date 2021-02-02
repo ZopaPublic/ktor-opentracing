@@ -31,11 +31,9 @@ class OpenTracingClient {
                     return@intercept
                 }
 
-                val pathUuid: PathUuid = context.url.encodedPath.UuidFromPath()
-                val name = "Call to ${context.method.value} ${context.url.host}${pathUuid.path}"
+                val name = "Call to ${context.method.value} ${context.url.host}${context.url.encodedPath}"
 
                 val spanBuilder = tracer.buildSpan(name)
-                if (pathUuid.uuid != null) spanBuilder.withTag("UUID", pathUuid.uuid)
                 if (spanStack.isNotEmpty()) spanBuilder?.asChildOf(spanStack.peek())
                 val span = spanBuilder?.start()
                 span?.addCleanup()

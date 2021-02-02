@@ -55,7 +55,8 @@ class KtorOpenTracingTest {
         application.install(OpenTracingServer)
 
         application.routing {
-            get(path) {
+            get(definedPath) {
+                call.parameters.entries()
                 call.respond("OK")
             }
         }
@@ -66,10 +67,10 @@ class KtorOpenTracingTest {
             with(mockTracer.finishedSpans()) {
                 assertThat(size).isEqualTo(1)
                 assertThat(first().parentId()).isEqualTo(0L) // no parent span
-                assertThat(first().operationName()).isEqualTo("GET /greeting/<UUID>")
+                assertThat(first().operationName()).isEqualTo("GET /greeting/{id}")
+                assertThat(first().tags().get("id")).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
                 assertThat(first().tags().get("span.kind")).isEqualTo("server")
                 assertThat(first().tags().get("http.status_code")).isEqualTo(200)
-                assertThat(first().tags().get("UUID")).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
             }
         }
     }
@@ -278,9 +279,9 @@ class KtorOpenTracingTest {
                 assertThat(size).isEqualTo(2)
 
                 assertThat(first().parentId()).isNotEqualTo(last().parentId())
-                assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
+//                assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
                 assertThat(first().tags().get("http.status_code")).isEqualTo(200)
-                assertThat(first().tags().get("UUID")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
+//                assertThat(first().tags().get("UUID")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
 
                 assertThat(last().parentId()).isEqualTo(0L)
                 assertThat(last().operationName()).isEqualTo("GET /sqrt")
@@ -317,26 +318,6 @@ class KtorOpenTracingTest {
                 client.request<String>("/")
             }
         } }
-    }
-
-    @Test
-    fun `UuidFromPath returns unchanged path and no uuid if no UUID in path`() {
-        val path = "/evidence"
-
-        val pathUuid = path.UuidFromPath()
-
-        assertThat(pathUuid.path).isEqualTo(path)
-        assertThat(pathUuid.uuid).isEqualTo(null)
-    }
-
-    @Test
-    fun `UuidFromPath returns path with UUID and uuid if UUID in path`() {
-        val path = "/evidence/AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F"
-
-        val pathUuid = path.UuidFromPath()
-
-        assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
-        assertThat(pathUuid.uuid).isEqualTo("AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
     }
 
     @Test
