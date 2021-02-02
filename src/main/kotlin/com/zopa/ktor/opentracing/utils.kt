@@ -8,7 +8,6 @@ import kotlinx.coroutines.Job
 import mu.KotlinLogging
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.lang.Exception
 import kotlin.coroutines.coroutineContext
 
 
@@ -29,6 +28,16 @@ internal suspend fun Span.addCleanup() {
             log(mapOf("stackTrace" to errors))
         }
         if (it != null) this.finish()
+    }
+}
+
+fun Span.addConfiguredLambdaTags() {
+    OpenTracingServer.config.lambdaTags.forEach {
+        try {
+            this.setTag(it.first, it.second.invoke())
+        } catch (e: Exception) {
+            log.warn(e) { "Could not add tag: ${it.first}" }
+        }
     }
 }
 

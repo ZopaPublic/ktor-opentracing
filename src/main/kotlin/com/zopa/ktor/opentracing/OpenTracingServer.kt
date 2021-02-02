@@ -24,23 +24,27 @@ import kotlinx.coroutines.withContext
 import java.util.Stack
 
 
-class OpenTracingServer(
-        val filters: List<(ApplicationCall) -> Boolean>
-) {
+class OpenTracingServer {
     class Configuration {
         val filters = mutableListOf<(ApplicationCall) -> Boolean>()
+        val lambdaTags = mutableListOf<Pair<String, () -> String>>()
 
         fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
+        }
+
+        fun addTag(name: String, lambda: () -> String) {
+            lambdaTags.add(Pair(name, lambda))
         }
     }
 
     companion object Feature : ApplicationFeature<Application, Configuration, OpenTracingServer> {
         override val key = AttributeKey<OpenTracingServer>("OpenTracingServer")
+        internal var config = Configuration()
 
         override fun install(pipeline: Application, configure: Configuration.() -> Unit): OpenTracingServer {
-            val config = Configuration().apply(configure)
-            val feature = OpenTracingServer(config.filters)
+            config = Configuration().apply(configure)
+            val feature = OpenTracingServer()
 
             val tracer: Tracer = getGlobalTracer()
 
@@ -68,6 +72,8 @@ class OpenTracingServer(
                 if (clientSpanContext != null) spanBuilder.asChildOf(clientSpanContext)
 
                 val span = spanBuilder.start()
+
+                span.addConfiguredLambdaTags()
                 span.addCleanup()
 
                 val spanStack = Stack<Span>()

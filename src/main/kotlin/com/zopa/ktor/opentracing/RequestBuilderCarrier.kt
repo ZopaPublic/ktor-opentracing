@@ -2,7 +2,6 @@ package com.zopa.ktor.opentracing
 
 import io.ktor.http.HeadersBuilder
 import io.opentracing.propagation.TextMap
-import java.lang.UnsupportedOperationException
 
 
 internal class RequestBuilderCarrier(private val headerBuilder: HeadersBuilder): TextMap {
