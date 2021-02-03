@@ -4,41 +4,20 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.HttpClientFeature
 import io.ktor.client.request.HttpSendPipeline
 import io.ktor.client.statement.HttpReceivePipeline
-import io.ktor.http.HttpMethod
 import io.ktor.util.AttributeKey
 import io.opentracing.Tracer
 import io.opentracing.propagation.Format
 import io.opentracing.tag.Tags
 
 
-class OpenTracingClient (
-        val clientConfig: Configuration
-){
-    class Configuration {
-        var routes = listOf<Route>()
+class OpenTracingClient {
+    class Config
 
-        fun configureRoutesWithParams(block: Routes.() -> Unit) {
-            routes = Routes().apply(block).routes
-        }
-
-        class Routes {
-            val routes = mutableListOf<Route>()
-
-            fun route(path: String, method: HttpMethod) {
-                routes.add(Route(method, path))
-            }
-            fun get(path: String) = route(path, HttpMethod.Get)
-            fun post(path: String) = route(path, HttpMethod.Post)
-            fun put(path: String) = route(path, HttpMethod.Put)
-        }
-
-    }
-
-    companion object : HttpClientFeature<Configuration, OpenTracingClient> {
+    companion object : HttpClientFeature<Config, OpenTracingClient> {
         override val key: AttributeKey<OpenTracingClient> = AttributeKey("OpenTracingClient")
 
-        override fun prepare(block: Configuration.() -> Unit): OpenTracingClient {
-            return OpenTracingClient(Configuration().apply(block))
+        override fun prepare(block: Config.() -> Unit): OpenTracingClient {
+            return OpenTracingClient()
         }
 
         override fun install(feature: OpenTracingClient, scope: HttpClient) {
@@ -52,8 +31,7 @@ class OpenTracingClient (
                     return@intercept
                 }
 
-                val (path, paramTags) = getPathAndTags(feature.clientConfig.routes, context.method, context.url.encodedPath)
-                val name = "Call to ${context.method.value} ${context.url.host}$path"
+                val name = "Call to ${context.method.value} ${context.url.host}${context.url.encodedPath}"
 
                 val spanBuilder = tracer.buildSpan(name)
                 if (spanStack.isNotEmpty()) spanBuilder?.asChildOf(spanStack.peek())
