@@ -31,14 +31,15 @@ class OpenTracingClient {
                     return@intercept
                 }
 
-                val name = "Call to ${context.method.value} ${context.url.host}${context.url.encodedPath}"
+                val pathUuid: PathUuid = context.url.encodedPath.UuidFromPath()
+                val name = "Call to ${context.method.value} ${context.url.host}${pathUuid.path}"
 
                 val spanBuilder = tracer.buildSpan(name)
+                if (pathUuid.uuid != null) spanBuilder.withTag("UUID", pathUuid.uuid)
                 if (spanStack.isNotEmpty()) spanBuilder?.asChildOf(spanStack.peek())
                 val span = spanBuilder?.start()
                 span?.addCleanup()
                 span?.addConfiguredLambdaTags()
-                paramTags.forEach { span?.setTag(it.tagName, it.tagValue) }
 
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT)
                 Tags.HTTP_METHOD.set(span, context.method.value)

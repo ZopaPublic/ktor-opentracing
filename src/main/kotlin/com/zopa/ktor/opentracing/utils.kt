@@ -13,6 +13,19 @@ import kotlin.coroutines.coroutineContext
 
 val log = KotlinLogging.logger { }
 
+internal data class PathUuid(val path: String, val uuid: String?)
+internal fun String.UuidFromPath(): PathUuid {
+    val match = """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex().find(this)
+
+    if (match == null)
+        return PathUuid(this, null)
+    else {
+        val uuid = match.value
+        val pathWithReplacement = this.replace(uuid, "<UUID>")
+        return PathUuid(pathWithReplacement, uuid)
+    }
+}
+
 fun getGlobalTracer(): Tracer {
     return GlobalTracer.get()
         ?: NoopTracerFactory.create()
