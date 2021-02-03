@@ -48,8 +48,8 @@ fun getPathAndTags(routes: List<Route>, method: HttpMethod, path: String): Pair<
     val callRoute = Route(method, path)
 
     routes.forEach { route ->
-        val result = route.matchToCallRoute(callRoute)
-        if (result.result) return Pair(route.path, result.tags)
+        val tags = route.getParamTagsIfMatch(callRoute)
+        if (tags.isNotEmpty()) return Pair(route.path, tags)
     }
     return Pair(path, emptyList())
 }

@@ -86,14 +86,12 @@ class OpenTracingServer {
 
             pipeline.environment.monitor.subscribe(Routing.RoutingCallStarted) {call ->
                 if (config.filters.any { it(call) }) return@subscribe
-                val span = GlobalTracer.get().activeSpan()
-
-                val routePath = call.route.parent.toString()
-                val spanName = "${call.request.httpMethod.value} $routePath"
+                val span = GlobalTracer.get().activeSpan() ?: return@subscribe
 
                 call.parameters.entries().forEach { param ->
                     span?.setTag(param.key, param.value.first())
                 }
+                val spanName = "${call.request.httpMethod.value} ${call.route.parent}"
                 span.setOperationName(spanName)
             }
 

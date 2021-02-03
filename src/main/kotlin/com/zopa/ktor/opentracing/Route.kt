@@ -11,10 +11,10 @@ class Route(
 ) {
     val segments: List<RoutingPathSegment> = RoutingPath.parse(path).parts
 
-    fun matchToCallRoute(call: Route): RouteMatchResult {
-        if (this.method != call.method) return RouteMatchResult(false)
-        if (call.segments.map { it.kind }.contains(RoutingPathSegmentKind.Parameter)) return RouteMatchResult(false)
-        if (call.segments.size != segments.size) return RouteMatchResult(false)
+    fun getParamTagsIfMatch(call: Route): List<Tag> {
+        if (this.method != call.method) return emptyList()
+        if (call.segments.map { it.kind }.contains(RoutingPathSegmentKind.Parameter)) return emptyList()
+        if (call.segments.size != segments.size) return emptyList()
 
         val iterator = segments.zip(call.segments).iterator()
         val tags = mutableListOf<Tag>()
@@ -24,13 +24,13 @@ class Route(
             val routeSegment = tmp.first
             val callSegmentValue = tmp.second.value
 
-            if (routeSegment.kind == RoutingPathSegmentKind.Constant && routeSegment.value != callSegmentValue) return RouteMatchResult(false)
+            if (routeSegment.kind == RoutingPathSegmentKind.Constant && routeSegment.value != callSegmentValue) return emptyList()
             if (routeSegment.kind == RoutingPathSegmentKind.Parameter)
                 tags.add(Tag(routeSegment.value.drop(1).dropLast(1), callSegmentValue))
 
         }
-        return RouteMatchResult(true, tags)
+        return tags
     }
 
-    class RouteMatchResult(val result: Boolean, val tags: List<Tag> = emptyList())
+//    class RouteMatchResult(val result: Boolean, val tags: List<Tag> = emptyList())
 }
