@@ -61,6 +61,9 @@ class KtorOpenTracingTest {
                 call.parameters.entries()
                 call.respond("OK")
             }
+            get("/another/path") {
+                call.respond("OK")
+            }
         }
 
         handleRequest(HttpMethod.Get, path) {}.let { call ->
@@ -317,7 +320,11 @@ class KtorOpenTracingTest {
         application.install(OpenTracingServer)
 
         val client = HttpClient(MockEngine) {
-            install(OpenTracingClient)
+            install(OpenTracingClient) {
+                configureRoutesWithParams {
+                    get("/member/{memberid}")
+                }
+            }
             engine {
                 addHandler {
                     respond("OK", HttpStatusCode.OK)
@@ -339,9 +346,9 @@ class KtorOpenTracingTest {
                 assertThat(size).isEqualTo(2)
 
                 assertThat(first().parentId()).isNotEqualTo(last().parentId())
-//                assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
+                assertThat(first().operationName()).isEqualTo("Call to GET localhost/member/{memberid}")
                 assertThat(first().tags().get("http.status_code")).isEqualTo(200)
-//                assertThat(first().tags().get("UUID")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
+                assertThat(first().tags().get("memberid")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
 
                 assertThat(last().parentId()).isEqualTo(0L)
                 assertThat(last().operationName()).isEqualTo("GET /sqrt")

@@ -1,5 +1,6 @@
 package com.zopa.ktor.opentracing
 
+import io.ktor.http.HttpMethod
 import io.opentracing.Span
 import io.opentracing.Tracer
 import io.opentracing.noop.NoopTracerFactory
@@ -41,6 +42,17 @@ fun Span.addConfiguredLambdaTags() {
     }
 }
 
+data class Tag(val tagName: String, val tagValue: String)
+
+fun getPathAndTags(routes: List<Route>, method: HttpMethod, path: String): Pair<String,List<Tag>> {
+    val callRoute = Route(method, path)
+
+    routes.forEach { route ->
+        val result = route.matchToCallRoute(callRoute)
+        if (result.result) return Pair(route.path, result.tags)
+    }
+    return Pair(path, emptyList())
+}
 /*
     Helper function to name spans. Should only be used in method of a class as such:
     classAndMethodName(this, object {})
