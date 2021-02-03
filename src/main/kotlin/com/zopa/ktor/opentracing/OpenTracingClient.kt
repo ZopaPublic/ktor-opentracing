@@ -59,6 +59,7 @@ class OpenTracingClient (
                 if (spanStack.isNotEmpty()) spanBuilder?.asChildOf(spanStack.peek())
                 val span = spanBuilder?.start()
                 span?.addCleanup()
+                span?.addConfiguredLambdaTags()
                 paramTags.forEach { span?.setTag(it.tagName, it.tagValue) }
 
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT)
