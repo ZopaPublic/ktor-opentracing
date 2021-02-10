@@ -91,8 +91,7 @@ class OpenTracingServer {
                 call.parameters.entries().forEach { param ->
                     span?.setTag(param.key, param.value.first())
                 }
-                val spanName = "${call.request.httpMethod.value} ${call.route.parent}"
-                span.setOperationName(spanName)
+                span.setOperationName("${call.request.httpMethod.value} ${call.route.parent}")
             }
 
             pipeline.intercept(tracingPhaseFinish) {
