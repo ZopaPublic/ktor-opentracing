@@ -58,7 +58,6 @@ class KtorOpenTracingTest {
 
         application.routing {
             get(configuredPath) {
-                call.parameters.entries()
                 call.respond("OK")
             }
         }
