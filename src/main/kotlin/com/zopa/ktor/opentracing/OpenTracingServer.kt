@@ -84,12 +84,12 @@ class OpenTracingServer {
                 }
             }
 
-            pipeline.environment.monitor.subscribe(Routing.RoutingCallStarted) {call ->
+            pipeline.environment.monitor.subscribe(Routing.RoutingCallStarted) { call ->
                 if (config.filters.any { it(call) }) return@subscribe
                 val span = GlobalTracer.get().activeSpan() ?: return@subscribe
 
                 call.parameters.entries().forEach { param ->
-                    span?.setTag(param.key, param.value.first())
+                    span.setTag(param.key, param.value.first())
                 }
                 span.setOperationName("${call.request.httpMethod.value} ${call.route.parent}")
             }

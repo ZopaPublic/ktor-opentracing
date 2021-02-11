@@ -1,6 +1,7 @@
 package com.zopa.ktor.opentracing
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
@@ -51,13 +52,13 @@ class KtorOpenTracingTest {
 
     @Test
     fun `Create server span for request without trace context in headers`() = withTestApplication {
-        val configuredPath = "/greeting/{id}"
-        val path = "/greeting/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f"
+        val routePath = "/greeting/{id}/{name}"
+        val path = "/greeting/ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f/Ruth"
 
         application.install(OpenTracingServer)
 
         application.routing {
-            get(configuredPath) {
+            get(routePath) {
                 call.respond("OK")
             }
         }
@@ -68,8 +69,9 @@ class KtorOpenTracingTest {
             with(mockTracer.finishedSpans()) {
                 assertThat(size).isEqualTo(1)
                 assertThat(first().parentId()).isEqualTo(0L) // no parent span
-                assertThat(first().operationName()).isEqualTo("GET /greeting/{id}")
+                assertThat(first().operationName()).isEqualTo("GET /greeting/{id}/{name}")
                 assertThat(first().tags().get("id")).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
+                assertThat(first().tags().get("name")).isEqualTo("Ruth")
                 assertThat(first().tags().get("span.kind")).isEqualTo("server")
                 assertThat(first().tags().get("http.status_code")).isEqualTo(200)
             }
@@ -387,7 +389,7 @@ class KtorOpenTracingTest {
     }
 
     @Test
-    fun `Client passes trace context in headers`() {
+    fun `Client passes trace context in headers and tags and tags uuids`() {
         val client = HttpClient(MockEngine) {
             install(OpenTracingClient)
             engine {
@@ -411,9 +413,36 @@ class KtorOpenTracingTest {
 
         assertDoesNotThrow { runBlocking {
             withContext(threadLocalSpanStack.asContextElement(spanStack)) {
-                client.request<String>("/")
+                client.request<String>("/4DCA6409-D958-417E-B4DD-20738C721C48/view")
             }
         } }
+
+        with(mockTracer.finishedSpans()) {
+            assertThat(size).isEqualTo(1)
+            assertThat(first().tags()).contains(Pair("span.kind", "client"))
+            assertThat(first().operationName()).isEqualTo("Call to GET localhost<UUID>/view")
+            assertThat(first().tags()).contains(Pair("UUID","4DCA6409-D958-417E-B4DD-20738C721C48"))
+        }
+    }
+
+    @Test
+    fun `UuidFromPath returns unchanged path and no uuid if no UUID in path`() {
+        val path = "/evidence"
+
+        val pathUuid = path.UuidFromPath()
+
+        assertThat(pathUuid.path).isEqualTo(path)
+        assertThat(pathUuid.uuid).isEqualTo(null)
+    }
+
+    @Test
+    fun `UuidFromPath returns path with UUID and uuid if UUID in path`() {
+        val path = "/evidence/AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F"
+
+        val pathUuid = path.UuidFromPath()
+
+        assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
+        assertThat(pathUuid.uuid).isEqualTo("AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
     }
 
     @Test
