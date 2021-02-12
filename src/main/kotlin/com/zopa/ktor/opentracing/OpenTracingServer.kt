@@ -8,7 +8,6 @@ import io.ktor.application.call
 import io.ktor.http.Headers
 import io.ktor.request.httpMethod
 import io.ktor.request.path
-import io.ktor.routing.HttpMethodRouteSelector
 import io.ktor.routing.Routing
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelinePhase
@@ -88,10 +87,13 @@ class OpenTracingServer {
                 if (config.filters.any { it(call) }) return@subscribe
                 val span = GlobalTracer.get().activeSpan() ?: return@subscribe
 
+                var pathWithParamsReplaced = call.request.path()
                 call.parameters.entries().forEach { param ->
                     span.setTag(param.key, param.value.first())
+                    pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(),  "{${param.key}}")
                 }
-                span.setOperationName("${call.request.httpMethod.value} ${call.route.parent}")
+                // only replace span name if sure it's correct
+                if (pathWithParamsReplaced == call.route.parent.toString()) span.setOperationName("${call.request.httpMethod.value} $pathWithParamsReplaced")
             }
 
             pipeline.intercept(tracingPhaseFinish) {
