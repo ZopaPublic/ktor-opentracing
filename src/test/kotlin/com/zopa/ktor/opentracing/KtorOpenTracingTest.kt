@@ -79,6 +79,34 @@ class KtorOpenTracingTest {
     }
 
     @Test
+    fun `Span is not renamed if param value is not unique in path`() = withTestApplication {
+        val routePath = "/hello/there/{name}"
+        val path = "/hello/there/hello"
+
+        application.install(OpenTracingServer)
+
+        application.routing {
+            get(routePath) {
+                call.respond("OK")
+            }
+        }
+
+        handleRequest(HttpMethod.Get, path) {}.let { call ->
+            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+
+            with(mockTracer.finishedSpans()) {
+                assertThat(size).isEqualTo(1)
+                assertThat(first().parentId()).isEqualTo(0L) // no parent span
+                assertThat(first().operationName()).isEqualTo("GET /hello/there/hello")
+                assertThat(first().tags().get("name")).isEqualTo("hello")
+                assertThat(first().tags().get("span.kind")).isEqualTo("server")
+                assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+            }
+        }
+
+    }
+
+    @Test
     fun `Server span with error code has error tag`() = withTestApplication {
         val path = "/greeting"
 
