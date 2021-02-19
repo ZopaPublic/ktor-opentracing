@@ -92,8 +92,8 @@ class OpenTracingServer {
                     span.setTag(param.key, param.value.first())
                     pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(),  "{${param.key}}")
                 }
-                // only replace span name if sure it's correct
-                if (pathWithParamsReplaced == call.route.parent.toString()) span.setOperationName("${call.request.httpMethod.value} $pathWithParamsReplaced")
+                
+                span.setOperationName("${call.request.httpMethod.value} $pathWithParamsReplaced")
             }
 
             pipeline.intercept(tracingPhaseFinish) {

@@ -79,7 +79,7 @@ class KtorOpenTracingTest {
     }
 
     @Test
-    fun `Span is not renamed if param value is not unique in path`() = withTestApplication {
+    fun `(Bug) Server span name incorrectly has all occurrence of request param replaced with value`() = withTestApplication {
         val routePath = "/hello/there/{name}"
         val path = "/hello/there/hello"
 
@@ -97,7 +97,7 @@ class KtorOpenTracingTest {
             with(mockTracer.finishedSpans()) {
                 assertThat(size).isEqualTo(1)
                 assertThat(first().parentId()).isEqualTo(0L) // no parent span
-                assertThat(first().operationName()).isEqualTo("GET /hello/there/hello")
+                assertThat(first().operationName()).isEqualTo("GET /{name}/there/{name}")
                 assertThat(first().tags().get("name")).isEqualTo("hello")
                 assertThat(first().tags().get("span.kind")).isEqualTo("server")
                 assertThat(first().tags().get("http.status_code")).isEqualTo(200)
