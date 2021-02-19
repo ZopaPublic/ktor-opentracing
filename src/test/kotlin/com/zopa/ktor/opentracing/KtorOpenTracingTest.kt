@@ -79,7 +79,7 @@ class KtorOpenTracingTest {
     }
 
     @Test
-    fun `Server span name has all occurence of request param replaced with value`() = withTestApplication {
+    fun `(Bug) Server span name incorrectly has all occurrence of request param replaced with value`() = withTestApplication {
         val routePath = "/hello/there/{name}"
         val path = "/hello/there/hello"
 
