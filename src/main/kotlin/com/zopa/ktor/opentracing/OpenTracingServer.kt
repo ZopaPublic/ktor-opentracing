@@ -48,7 +48,7 @@ class OpenTracingServer {
             val tracer: Tracer = getGlobalTracer()
 
             val tracingPhaseStart = PipelinePhase("OpenTracingStart")
-            pipeline.insertPhaseBefore(ApplicationCallPipeline.Features, tracingPhaseStart)
+            pipeline.insertPhaseAfter(ApplicationCallPipeline.Setup, tracingPhaseStart)
 
             val tracingPhaseFinish = PipelinePhase("OpenTracingFinish")
             pipeline.insertPhaseAfter(ApplicationCallPipeline.Fallback, tracingPhaseFinish)
