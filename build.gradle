@@ -1,5 +1,5 @@
 buildscript {
-    ext.ktor_version = "1.4.2"
+    ext.ktor_version = "1.5.2"
     ext.opentracing_version = "0.33.0"
 
     dependencies {
@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.4.20'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
     id 'java-library'
 }
 
