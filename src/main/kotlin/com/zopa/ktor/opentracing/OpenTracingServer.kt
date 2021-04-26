@@ -60,7 +60,7 @@ class OpenTracingServer {
                 headers.remove("Authorization")
 
                 val clientSpanContext: SpanContext? = tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
-                if (clientSpanContext == null) log.info("Tracing context could not be found in request headers. Starting a new server trace.")
+                if (clientSpanContext == null) log.debug("Tracing context could not be found in request headers. Starting a new server trace.")
 
                 val spanName = "${context.request.httpMethod.value} ${context.request.path()}"
 
