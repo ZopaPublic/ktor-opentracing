@@ -109,7 +109,7 @@ From [Maven Central](https://search.maven.org/artifact/com.zopa/ktor-opentracing
 Add the following dependency to your `pom.xml`:
 ```xml
 <dependency>
- <groupId>com.github.fstien</groupId>
+ <groupId>com.zopa</groupId>
  <artifactId>ktor-opentracing</artifactId>
  <version>VERSION_NUMBER</version>
 </dependency>
@@ -119,7 +119,7 @@ Add the following dependency to your `pom.xml`:
 Add the following to your `dependencies` in your `build.gradle` 
  
 ```
-implementation "com.github.fstien:ktor-opentracing:VERSION_NUMBER"
+implementation "com.zopa:ktor-opentracing:VERSION_NUMBER"
 ```
 
 ## Examples
