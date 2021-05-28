@@ -1,0 +1,74 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+task libSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.java.srcDirs
+    from sourceSets.main.kotlin.srcDirs
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier.set('javadoc')
+    from sourceSets.main.java.srcDirs
+    from sourceSets.main.kotlin.srcDirs
+}
+
+artifacts {
+    archives libSourcesJar
+}
+
+group = PUBLISH_GROUP_ID
+version = PUBLISH_VERSION
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                // The coordinates of the library, being set from variables that
+                // we'll set up later
+                groupId PUBLISH_GROUP_ID
+                artifactId PUBLISH_ARTIFACT_ID
+                version PUBLISH_VERSION
+
+                artifact("$buildDir/libs/${project.getName()}-${version}.jar")
+
+                artifact libSourcesJar
+                artifact javadocJar
+
+                // Mostly self-explanatory metadata
+                pom {
+                    name = PUBLISH_ARTIFACT_ID
+                    description = 'Ktor features for OpenTracing instrumentation.'
+                    url = 'https://github.com/zopaUK/ktor-opentracing'
+                    licenses {
+                        license {
+                            name = 'MIT'
+                            url = 'https://github.com/zopaUK/ktor-opentracing/blob/main/LICENSE'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'fstien'
+                            name = 'Francois Stiennon'
+                            email = 'francois.stiennon@gmail.com'
+                        }
+                    }
+
+                    scm {
+                        connection = 'scm:git:github.com/zopaUK/ktor-opentracing.git'
+                        developerConnection = 'scm:git:ssh://github.com/zopaUK/ktor-opentracing.git'
+                        url = 'https://github.com/zopaUK/ktor-opentracing'
+                    }
+                }
+            }
+        }
+    }
+}
+
+ext["signing.keyId"] = rootProject.ext["signing.keyId"]
+ext["signing.password"] = rootProject.ext["signing.password"]
+ext["signing.secretKeyRingFile"] = rootProject.ext["signing.secretKeyRingFile"]
+
+signing {
+    sign publishing.publications
+}
