@@ -17,13 +17,10 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-
-    implementation "io.github.microutils:kotlin-logging-jvm:2.0.2"
+    implementation "io.github.microutils:kotlin-logging-jvm:2.0.8"
 
     implementation "io.ktor:ktor-server-core:$ktor_version"
     implementation "io.ktor:ktor-client-core:$ktor_version"
-    implementation "io.ktor:ktor-client-apache:$ktor_version"
 
     implementation "io.opentracing:opentracing-api:$opentracing_version"
     implementation "io.opentracing:opentracing-noop:$opentracing_version"
