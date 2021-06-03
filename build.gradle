@@ -12,7 +12,7 @@ plugins {
 apply from: "${rootDir}/scripts/publish-root.gradle"
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -37,7 +37,6 @@ dependencies {
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "io.ktor:ktor-client-mock-jvm:$ktor_version"
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
-
 }
 
 test {
@@ -46,7 +45,7 @@ test {
 
 ext {
     PUBLISH_GROUP_ID = 'com.zopa'
-    PUBLISH_VERSION = '0.3.3'
+    PUBLISH_VERSION = '0.3.4'
     PUBLISH_ARTIFACT_ID = 'ktor-opentracing'
 }
 
