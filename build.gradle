@@ -45,7 +45,7 @@ test {
 
 ext {
     PUBLISH_GROUP_ID = 'com.zopa'
-    PUBLISH_VERSION = '0.3.4'
+    PUBLISH_VERSION = '0.3.5'
     PUBLISH_ARTIFACT_ID = 'ktor-opentracing'
 }
 
