@@ -1,10 +1,11 @@
 buildscript {
-    ext.ktor_version = "1.5.2"
+    ext.kotlin_version = "1.5.10"
+    ext.ktor_version = "1.6.0"
     ext.opentracing_version = "0.33.0"
 }
 
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'java-library'
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
 }
@@ -16,10 +17,9 @@ repositories {
 }
 
 dependencies {
-    implementation platform('org.jetbrains.kotlin:kotlin-bom')
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    implementation 'io.github.microutils:kotlin-logging-jvm:2.0.2'
+    implementation "io.github.microutils:kotlin-logging-jvm:2.0.2"
 
     implementation "io.ktor:ktor-server-core:$ktor_version"
     implementation "io.ktor:ktor-client-core:$ktor_version"
@@ -29,8 +29,8 @@ dependencies {
     implementation "io.opentracing:opentracing-noop:$opentracing_version"
     implementation "io.opentracing:opentracing-util:$opentracing_version"
 
-    testImplementation 'org.jetbrains.kotlin:kotlin-test'
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.4.31'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.4.31'
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.2"
     testImplementation "com.willowtreeapps.assertk:assertk-jvm:0.23"
     testImplementation "io.opentracing:opentracing-mock:$opentracing_version"
