@@ -46,7 +46,7 @@ class TracingUtilTest {
 
         bark()
 
-        assertThat(name).isEqualTo("BlockingCoroutine.invokeSuspend()")
+        assertThat(name).isEqualTo("BlockingCoroutine.invokeSuspend\$bark()")
     }
 
     @Test
@@ -59,6 +59,6 @@ class TracingUtilTest {
 
         "Hello world".toSomethingElse()
 
-        assertThat(name).isEqualTo("String.invoke()")
+        assertThat(name).isEqualTo("String.invokeSuspend\$toSomethingElse()")
     }
 }
