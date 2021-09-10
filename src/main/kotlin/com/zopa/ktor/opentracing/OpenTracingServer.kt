@@ -1,14 +1,14 @@
 package com.zopa.ktor.opentracing
 
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.ApplicationCallPipeline
-import io.ktor.application.ApplicationFeature
-import io.ktor.application.call
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.call
 import io.ktor.http.Headers
-import io.ktor.request.httpMethod
-import io.ktor.request.path
-import io.ktor.routing.Routing
+import io.ktor.server.application.ApplicationPlugin
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
+import io.ktor.server.routing.Routing
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelinePhase
 import io.opentracing.Span
@@ -37,7 +37,7 @@ class OpenTracingServer {
         }
     }
 
-    companion object Feature : ApplicationFeature<Application, Configuration, OpenTracingServer> {
+    companion object Plugin : ApplicationPlugin<Application, Configuration, OpenTracingServer> {
         override val key = AttributeKey<OpenTracingServer>("OpenTracingServer")
         internal var config = Configuration()
 
@@ -59,7 +59,8 @@ class OpenTracingServer {
                 val headers: MutableMap<String, String> = call.request.headers.toMap()
                 headers.remove("Authorization")
 
-                val clientSpanContext: SpanContext? = tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
+                val clientSpanContext: SpanContext? =
+                    tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
                 if (clientSpanContext == null) log.debug("Tracing context could not be found in request headers. Starting a new server trace.")
 
                 val spanName = "${context.request.httpMethod.value} ${context.request.path()}"
@@ -90,9 +91,9 @@ class OpenTracingServer {
                 var pathWithParamsReplaced = call.request.path()
                 call.parameters.entries().forEach { param ->
                     span.setTag(param.key, param.value.first())
-                    pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(),  "{${param.key}}")
+                    pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(), "{${param.key}}")
                 }
-                
+
                 span.setOperationName("${call.request.httpMethod.value} $pathWithParamsReplaced")
             }
 
@@ -124,10 +125,8 @@ class OpenTracingServer {
         }
 
         private fun Headers.toMap(): MutableMap<String, String> =
-                this.entries()
-                    .filter { (_, values) -> values.isNotEmpty() }
-                    .map { (key, values) -> key to values.first() }
-                    .toMap()
-                    .toMutableMap()
+            this.entries()
+                .filter { (_, values) -> values.isNotEmpty() }.associate { (key, values) -> key to values.first() }
+                .toMutableMap()
     }
 }

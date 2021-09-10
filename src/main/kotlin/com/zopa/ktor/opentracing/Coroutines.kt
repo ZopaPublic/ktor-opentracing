@@ -3,11 +3,11 @@ package com.zopa.ktor.opentracing
 import io.opentracing.Span
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.util.Stack
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -25,12 +25,20 @@ fun tracingContext(): CoroutineContext {
 }
 
 fun CoroutineScope.launchTraced(
-        context: CoroutineContext = EmptyCoroutineContext,
-        start: CoroutineStart = CoroutineStart.DEFAULT,
-        block: suspend CoroutineScope.() -> Unit
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit
 ): Job = launch(context + tracingContext(), start, block)
 
+@Suppress("DeferredIsResult")
+@Deprecated("Use tracedAsync instead", ReplaceWith("tracedAsync(context, start, block)"))
 fun <T> CoroutineScope.asyncTraced(
+    context: CoroutineContext = EmptyCoroutineContext,
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> T
+) = tracedAsync(context, start, block)
+
+fun <T> CoroutineScope.tracedAsync(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T

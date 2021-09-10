@@ -13,23 +13,33 @@ import kotlin.coroutines.coroutineContext
 
 val log = KotlinLogging.logger { }
 
-internal data class PathUuid(val path: String, val uuid: String?)
-internal fun String.UuidFromPath(): PathUuid {
-    val match = """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex().find(this)
+private val uuidRegex =
+    """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex()
 
-    if (match == null)
-        return PathUuid(this, null)
-    else {
-        val uuid = match.value
-        val pathWithReplacement = this.replace(uuid, "<UUID>")
-        return PathUuid(pathWithReplacement, uuid)
+internal data class PathUuid(val path: List<String>, val uuid: String?) {
+    override fun toString(): String = path.joinToString("/")
+}
+
+internal fun List<String>.toPathUuid(): PathUuid {
+    forEachIndexed { index, input ->
+        val match = uuidRegex.find(input)
+        if(match != null) {
+            val pathWithReplacement = toMutableList().apply {
+                removeAt(index)
+                add(index, "<UUID>")
+            }.toList()
+
+            return PathUuid(pathWithReplacement, match.value)
+        }
     }
+
+    return PathUuid(this, null)
 }
 
 fun getGlobalTracer(): Tracer {
     return GlobalTracer.get()
         ?: NoopTracerFactory.create()
-            .also { log.warn("Tracer not registered in GlobalTracer. Using Noop tracer instead.") }
+            .also { log.warn { "Tracer not registered in GlobalTracer. Using Noop tracer instead." } }
 }
 
 internal suspend fun Span.addCleanup() {
@@ -60,8 +70,8 @@ fun Span.addConfiguredLambdaTags() {
     Note that this function will give unexpected results if used in regular functions, extension functions and init functions. For these spans, it is preferable to define span names explicitly.
 */
 fun classAndMethodName(
-        currentInstance: Any,
-        anonymousObjectCreatedInMethod: Any
+    currentInstance: Any,
+    anonymousObjectCreatedInMethod: Any
 ): String {
     val className = currentInstance::class.simpleName
 
