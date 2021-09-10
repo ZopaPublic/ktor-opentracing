@@ -4,13 +4,13 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import com.zopa.ktor.opentracing.util.mockTracer
-import io.ktor.application.call
-import io.ktor.application.install
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
 import io.opentracing.propagation.Format
@@ -58,32 +58,33 @@ class KtorOpenTracingServerTest {
     }
 
     @Test
-    fun `(Bug) Server span name incorrectly has all occurrence of request param replaced with value`() = withTestApplication {
-        val routePath = "/hello/there/{name}"
-        val path = "/hello/there/hello"
+    fun `(Bug) Server span name incorrectly has all occurrence of request param replaced with value`() =
+        withTestApplication {
+            val routePath = "/hello/there/{name}"
+            val path = "/hello/there/hello"
 
-        application.install(OpenTracingServer)
+            application.install(OpenTracingServer)
 
-        application.routing {
-            get(routePath) {
-                call.respond("OK")
+            application.routing {
+                get(routePath) {
+                    call.respond("OK")
+                }
             }
-        }
 
-        handleRequest(HttpMethod.Get, path) {}.let { call ->
-            assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
+            handleRequest(HttpMethod.Get, path) {}.let { call ->
+                assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
-            with(mockTracer.finishedSpans()) {
-                assertThat(size).isEqualTo(1)
-                assertThat(first().parentId()).isEqualTo(0L) // no parent span
-                assertThat(first().operationName()).isEqualTo("GET /{name}/there/{name}")
-                assertThat(first().tags().get("name")).isEqualTo("hello")
-                assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+                with(mockTracer.finishedSpans()) {
+                    assertThat(size).isEqualTo(1)
+                    assertThat(first().parentId()).isEqualTo(0L) // no parent span
+                    assertThat(first().operationName()).isEqualTo("GET /{name}/there/{name}")
+                    assertThat(first().tags().get("name")).isEqualTo("hello")
+                    assertThat(first().tags().get("span.kind")).isEqualTo("server")
+                    assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+                }
             }
-        }
 
-    }
+        }
 
     @Test
     fun `Server span with error code has error tag`() = withTestApplication {

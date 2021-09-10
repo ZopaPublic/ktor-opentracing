@@ -4,21 +4,21 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.zopa.ktor.opentracing.util.mockTracer
-import io.ktor.application.call
-import io.ktor.application.install
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.request.path
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
-import io.opentracing.mock.MockTracer
 import io.opentracing.util.GlobalTracer
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -130,7 +130,7 @@ class ConfigurationTest {
 
         application.routing {
             get(path) {
-                val clientResponse = client.get<String>("/member/74c144e6-ec05-49af-b3a2-217e1254897f")
+                val clientResponse = client.get("/member/74c144e6-ec05-49af-b3a2-217e1254897f").bodyAsText()
                 call.respond(clientResponse)
             }
         }

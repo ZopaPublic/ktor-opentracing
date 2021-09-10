@@ -1,14 +1,14 @@
 package com.zopa.ktor.opentracing
 
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.ApplicationCallPipeline
-import io.ktor.application.ApplicationFeature
-import io.ktor.application.call
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.application.call
 import io.ktor.http.Headers
-import io.ktor.request.httpMethod
-import io.ktor.request.path
-import io.ktor.routing.Routing
+import io.ktor.server.application.ApplicationPlugin
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
+import io.ktor.server.routing.Routing
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelinePhase
 import io.opentracing.Span
@@ -37,7 +37,7 @@ class OpenTracingServer {
         }
     }
 
-    companion object Feature : ApplicationFeature<Application, Configuration, OpenTracingServer> {
+    companion object Plugin : ApplicationPlugin<Application, Configuration, OpenTracingServer> {
         override val key = AttributeKey<OpenTracingServer>("OpenTracingServer")
         internal var config = Configuration()
 
@@ -92,7 +92,7 @@ class OpenTracingServer {
                     span.setTag(param.key, param.value.first())
                     pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(),  "{${param.key}}")
                 }
-                
+
                 span.setOperationName("${call.request.httpMethod.value} $pathWithParamsReplaced")
             }
 

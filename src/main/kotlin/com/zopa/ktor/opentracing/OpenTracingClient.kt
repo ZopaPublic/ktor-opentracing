@@ -1,7 +1,7 @@
 package com.zopa.ktor.opentracing
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.HttpClientFeature
+import io.ktor.client.plugins.HttpClientPlugin
 import io.ktor.client.request.HttpSendPipeline
 import io.ktor.client.statement.HttpReceivePipeline
 import io.ktor.util.AttributeKey
@@ -13,7 +13,7 @@ import io.opentracing.tag.Tags
 class OpenTracingClient {
     class Config
 
-    companion object : HttpClientFeature<Config, OpenTracingClient> {
+    companion object : HttpClientPlugin<Config, OpenTracingClient> {
         override val key: AttributeKey<OpenTracingClient> = AttributeKey("OpenTracingClient")
 
         override fun prepare(block: Config.() -> Unit): OpenTracingClient {
@@ -31,8 +31,8 @@ class OpenTracingClient {
                     return@intercept
                 }
 
-                val pathUuid: PathUuid = context.url.encodedPath.UuidFromPath()
-                val name = "Call to ${context.method.value} ${context.url.host}${pathUuid.path}"
+                val pathUuid: PathUuid = context.url.pathSegments.toPathUuid()
+                val name = "Call to ${context.method.value} ${context.url.build().host}${pathUuid}"
 
                 val spanBuilder = tracer.buildSpan(name)
                 if (pathUuid.uuid != null) spanBuilder.withTag("UUID", pathUuid.uuid)
@@ -43,7 +43,7 @@ class OpenTracingClient {
 
                 Tags.SPAN_KIND.set(span, Tags.SPAN_KIND_CLIENT)
                 Tags.HTTP_METHOD.set(span, context.method.value)
-                Tags.HTTP_URL.set(span, "${context.url.host}${context.url.encodedPath}")
+                Tags.HTTP_URL.set(span, "${context.url.host}${context.url.pathSegments.joinToString("/")}")
 
                 spanStack.push(span)
                 tracer.inject(span?.context(), Format.Builtin.HTTP_HEADERS, RequestBuilderCarrier(context.headers))
@@ -62,7 +62,7 @@ class OpenTracingClient {
                 }
                 val span = spanStack.pop()
 
-                val statusCode = context.response.status
+                val statusCode = subject.status
                 Tags.HTTP_STATUS.set(span, statusCode.value)
                 if (statusCode.value >= 400) span.setTag("error", true)
 
