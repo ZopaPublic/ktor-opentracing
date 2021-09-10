@@ -14,7 +14,7 @@ import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
 import io.opentracing.util.GlobalTracer
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -47,11 +47,12 @@ class SpanTest {
                 }
 
                 val sqrt: Double = sqrtOfInt(2)
-                val sqrtSuspend: Double = runBlocking {
-                    sqrtOfIntSuspend(10)
+                runBlockingTest {
+                    val sqrtSuspend: Double = sqrtOfIntSuspend(10)
+
+                    call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
                 }
 
-                call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
             }
         }
 
@@ -64,7 +65,7 @@ class SpanTest {
                 // server span
                 assertThat(last().parentId()).isEqualTo(0L)
                 assertThat(last().operationName()).isEqualTo("GET /sqrt")
-                assertThat(last().tags().get("span.kind")).isEqualTo("server")
+                assertThat(last().tags()["span.kind"]).isEqualTo("server")
 
                 // first child span
                 assertThat(first().context().traceId()).isEqualTo(last().context().traceId())

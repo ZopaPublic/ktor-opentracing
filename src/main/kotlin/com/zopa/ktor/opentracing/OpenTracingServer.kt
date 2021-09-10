@@ -59,7 +59,8 @@ class OpenTracingServer {
                 val headers: MutableMap<String, String> = call.request.headers.toMap()
                 headers.remove("Authorization")
 
-                val clientSpanContext: SpanContext? = tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
+                val clientSpanContext: SpanContext? =
+                    tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
                 if (clientSpanContext == null) log.debug("Tracing context could not be found in request headers. Starting a new server trace.")
 
                 val spanName = "${context.request.httpMethod.value} ${context.request.path()}"
@@ -90,7 +91,7 @@ class OpenTracingServer {
                 var pathWithParamsReplaced = call.request.path()
                 call.parameters.entries().forEach { param ->
                     span.setTag(param.key, param.value.first())
-                    pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(),  "{${param.key}}")
+                    pathWithParamsReplaced = pathWithParamsReplaced.replace(param.value.first(), "{${param.key}}")
                 }
 
                 span.setOperationName("${call.request.httpMethod.value} $pathWithParamsReplaced")
@@ -124,10 +125,8 @@ class OpenTracingServer {
         }
 
         private fun Headers.toMap(): MutableMap<String, String> =
-                this.entries()
-                    .filter { (_, values) -> values.isNotEmpty() }
-                    .map { (key, values) -> key to values.first() }
-                    .toMap()
-                    .toMutableMap()
+            this.entries()
+                .filter { (_, values) -> values.isNotEmpty() }.associate { (key, values) -> key to values.first() }
+                .toMutableMap()
     }
 }

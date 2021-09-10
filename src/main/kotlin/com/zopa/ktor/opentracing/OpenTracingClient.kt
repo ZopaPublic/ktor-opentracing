@@ -20,7 +20,7 @@ class OpenTracingClient {
             return OpenTracingClient()
         }
 
-        override fun install(feature: OpenTracingClient, scope: HttpClient) {
+        override fun install(plugin: OpenTracingClient, scope: HttpClient) {
 
             val tracer: Tracer = getGlobalTracer()
 

@@ -29,6 +29,7 @@ dependencies {
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
     testImplementation 'com.willowtreeapps.assertk:assertk-jvm:0.24'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.2'
     testImplementation "io.opentracing:opentracing-mock:$opentracing_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "io.ktor:ktor-client-mock-jvm:$ktor_version"
@@ -43,6 +44,10 @@ ext {
     PUBLISH_GROUP_ID = 'com.zopa'
     PUBLISH_VERSION = '0.3.6'
     PUBLISH_ARTIFACT_ID = 'ktor-opentracing'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
 apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"

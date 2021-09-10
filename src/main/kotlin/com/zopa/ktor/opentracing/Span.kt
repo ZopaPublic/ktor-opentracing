@@ -9,7 +9,7 @@ inline fun <T> span(name: String = "defaultSpanName", block: Span.() -> T): T {
     span.addConfiguredLambdaTags()
 
     try {
-        tracer.scopeManager().activate(span).use { scope ->
+        tracer.scopeManager().activate(span).use {
             return block(span)
         }
     } finally {

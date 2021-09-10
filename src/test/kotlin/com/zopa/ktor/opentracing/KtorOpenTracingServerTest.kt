@@ -49,10 +49,10 @@ class KtorOpenTracingServerTest {
                 assertThat(size).isEqualTo(1)
                 assertThat(first().parentId()).isEqualTo(0L) // no parent span
                 assertThat(first().operationName()).isEqualTo("GET /greeting/{id}/{name}")
-                assertThat(first().tags().get("id")).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
-                assertThat(first().tags().get("name")).isEqualTo("Ruth")
-                assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+                assertThat(first().tags()["id"]).isEqualTo("ab7ad59a-a0ff-4eb1-90cf-bc6d5c24095f")
+                assertThat(first().tags()["name"]).isEqualTo("Ruth")
+                assertThat(first().tags()["span.kind"]).isEqualTo("server")
+                assertThat(first().tags()["http.status_code"]).isEqualTo(200)
             }
         }
     }
@@ -78,9 +78,9 @@ class KtorOpenTracingServerTest {
                     assertThat(size).isEqualTo(1)
                     assertThat(first().parentId()).isEqualTo(0L) // no parent span
                     assertThat(first().operationName()).isEqualTo("GET /{name}/there/{name}")
-                    assertThat(first().tags().get("name")).isEqualTo("hello")
-                    assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                    assertThat(first().tags().get("http.status_code")).isEqualTo(200)
+                    assertThat(first().tags()["name"]).isEqualTo("hello")
+                    assertThat(first().tags()["span.kind"]).isEqualTo("server")
+                    assertThat(first().tags()["http.status_code"]).isEqualTo(200)
                 }
             }
 
@@ -106,9 +106,9 @@ class KtorOpenTracingServerTest {
                 assertThat(size).isEqualTo(1)
                 assertThat(first().parentId()).isEqualTo(0L) // no parent span
                 assertThat(first().operationName()).isEqualTo("GET /greeting")
-                assertThat(first().tags().get("span.kind")).isEqualTo("server")
-                assertThat(first().tags().get("http.status_code")).isEqualTo(401)
-                assertThat(first().tags().get("error")).isEqualTo(true)
+                assertThat(first().tags()["span.kind"]).isEqualTo("server")
+                assertThat(first().tags()["http.status_code"]).isEqualTo(401)
+                assertThat(first().tags()["error"]).isEqualTo(true)
             }
         }
     }
@@ -180,7 +180,7 @@ class KtorOpenTracingServerTest {
                 assertThat(first().parentId()).isNotEqualTo(0L) // has parent span
                 assertThat(first().references().first().referenceType).isEqualTo("child_of")
                 assertThat(first().operationName()).isEqualTo("GET /greeting")
-                assertThat(first().tags().get("span.kind")).isEqualTo("server")
+                assertThat(first().tags()["span.kind"]).isEqualTo("server")
             }
         }
     }

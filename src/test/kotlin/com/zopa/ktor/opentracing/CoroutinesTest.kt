@@ -45,7 +45,7 @@ class CoroutinesTest {
         application.routing {
             get(path) {
                 val result: List<Int> = listOf(1, 10).map { id ->
-                    asyncTraced {
+                    tracedAsync {
                         span(id.toString()) {
                             getDouble(id)
                         }
