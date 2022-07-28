@@ -5,31 +5,28 @@ import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEqualTo
 import com.zopa.ktor.opentracing.util.mockTracer
-import io.ktor.application.call
-import io.ktor.application.install
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.get
 import io.ktor.client.request.request
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.application.*
+import io.ktor.server.response.respond
+import io.ktor.server.routing.*
+import io.ktor.server.testing.*
 import io.opentracing.Span
 import io.opentracing.util.GlobalTracer
 import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
-import java.util.*
+import java.util.Stack
 
 @TestInstance(Lifecycle.PER_CLASS)
 class OpenTracingClientTest {
@@ -56,7 +53,7 @@ class OpenTracingClientTest {
 
         application.routing {
             get(path) {
-                val clientResponse = client.get<String>("/member/74c144e6-ec05-49af-b3a2-217e1254897f")
+                val clientResponse = client.get("/member/74c144e6-ec05-49af-b3a2-217e1254897f").bodyAsText()
                 call.respond(clientResponse)
             }
         }
@@ -65,16 +62,17 @@ class OpenTracingClientTest {
             assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
             with(mockTracer.finishedSpans()) {
+                println(this)
                 assertThat(size).isEqualTo(2)
 
                 assertThat(first().parentId()).isNotEqualTo(last().parentId())
-                assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
-                assertThat(first().tags().get("http.status_code")).isEqualTo(200)
-                assertThat(first().tags().get("UUID")).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
+                assertThat(first().operationName()).isEqualTo("Call to GET localhost/member/<UUID>")
+                assertThat(first().tags()["http.status_code"]).isEqualTo(200)
+                assertThat(first().tags()["UUID"]).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
 
                 assertThat(last().parentId()).isEqualTo(0L)
                 assertThat(last().operationName()).isEqualTo("GET /sqrt")
-                assertThat(last().tags().get("span.kind")).isEqualTo("server")
+                assertThat(last().tags()["span.kind"]).isEqualTo("server")
             }
         }
     }
@@ -87,8 +85,7 @@ class OpenTracingClientTest {
                 addHandler { request ->
                     val headers = request.headers.entries()
                         .filter { (_, values) -> values.isNotEmpty() }
-                        .map { (key, values) -> key to values.first() }
-                        .toMap()
+                        .associate { (key, values) -> key to values.first() }
 
                     if (headers.containsKey("traceid"))
                         respond("OK", HttpStatusCode.OK)
@@ -102,19 +99,17 @@ class OpenTracingClientTest {
         val spanStack = Stack<Span>()
         spanStack.push(span)
 
-        assertDoesNotThrow { runBlocking {
-            withContext(threadLocalSpanStack.asContextElement(spanStack)) {
-                client.request<String>("/4DCA6409-D958-417E-B4DD-20738C721C48/view")
+        assertDoesNotThrow {
+            runTest(threadLocalSpanStack.asContextElement(spanStack)) {
+                client.request("/4DCA6409-D958-417E-B4DD-20738C721C48/view").bodyAsText()
             }
-        } }
+        }
 
         with(mockTracer.finishedSpans()) {
             assertThat(size).isEqualTo(1)
             assertThat(first().tags()).contains(Pair("span.kind", "client"))
-            assertThat(first().operationName()).isEqualTo("Call to GET localhost<UUID>/view")
-            assertThat(first().tags()).contains(Pair("UUID","4DCA6409-D958-417E-B4DD-20738C721C48"))
+            assertThat(first().operationName()).isEqualTo("Call to GET localhost/<UUID>/view")
+            assertThat(first().tags()).contains(Pair("UUID", "4DCA6409-D958-417E-B4DD-20738C721C48"))
         }
     }
-
-
 }

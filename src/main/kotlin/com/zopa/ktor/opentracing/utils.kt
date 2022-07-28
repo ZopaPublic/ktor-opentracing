@@ -10,26 +10,35 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.coroutines.coroutineContext
 
+private val logger = KotlinLogging.logger {}
 
-val log = KotlinLogging.logger { }
+private val uuidRegex =
+    """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex()
 
-internal data class PathUuid(val path: String, val uuid: String?)
-internal fun String.UuidFromPath(): PathUuid {
-    val match = """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex().find(this)
-
-    if (match == null)
-        return PathUuid(this, null)
-    else {
-        val uuid = match.value
-        val pathWithReplacement = this.replace(uuid, "<UUID>")
-        return PathUuid(pathWithReplacement, uuid)
-    }
+internal data class PathUuid(val path: List<String>, val uuid: String?) {
+    override fun toString(): String = path.joinToString("/")
 }
 
-fun getGlobalTracer(): Tracer {
+internal fun List<String>.toPathUuid(): PathUuid {
+    forEachIndexed { index, input ->
+        val match = uuidRegex.find(input)
+        if(match != null) {
+            val pathWithReplacement = toMutableList().apply {
+                removeAt(index)
+                add(index, "<UUID>")
+            }.toList()
+
+            return PathUuid(pathWithReplacement, match.value)
+        }
+    }
+
+    return PathUuid(this, null)
+}
+
+public fun getGlobalTracer(): Tracer {
     return GlobalTracer.get()
         ?: NoopTracerFactory.create()
-            .also { log.warn("Tracer not registered in GlobalTracer. Using Noop tracer instead.") }
+            .also { logger.warn { "Tracer not registered in GlobalTracer. Using Noop tracer instead." } }
 }
 
 internal suspend fun Span.addCleanup() {
@@ -44,24 +53,24 @@ internal suspend fun Span.addCleanup() {
     }
 }
 
-fun Span.addConfiguredLambdaTags() {
+public fun Span.addConfiguredLambdaTags() {
     OpenTracingServer.config.lambdaTags.forEach {
         try {
             this.setTag(it.first, it.second.invoke())
         } catch (e: Exception) {
-            log.warn(e) { "Could not add tag: ${it.first}" }
+            logger.warn(e) { "Could not add tag: ${it.first}" }
         }
     }
 }
 
-/*
-    Helper function to name spans. Should only be used in method of a class as such:
-    classAndMethodName(this, object {})
-    Note that this function will give unexpected results if used in regular functions, extension functions and init functions. For these spans, it is preferable to define span names explicitly.
-*/
-fun classAndMethodName(
-        currentInstance: Any,
-        anonymousObjectCreatedInMethod: Any
+/**
+ * Helper function to name spans. Should only be used in method of a class as such: `classAndMethodName(this, object {})`
+ * Note that this function will give unexpected results if used in regular functions, extension functions and init
+ * functions. For these spans, it is preferable to define span names explicitly.
+ */
+public fun classAndMethodName(
+    currentInstance: Any,
+    anonymousObjectCreatedInMethod: Any
 ): String {
     val className = currentInstance::class.simpleName
 

@@ -1,6 +1,6 @@
 buildscript {
-    ext.kotlin_version = "1.5.10"
-    ext.ktor_version = "1.6.0"
+    ext.kotlin_version = "1.5.30"
+    ext.ktor_version = "2.0.3"
     ext.opentracing_version = "0.33.0"
 }
 
@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation "io.github.microutils:kotlin-logging-jvm:2.0.8"
+    implementation 'io.github.microutils:kotlin-logging-jvm:2.1.23'
 
     implementation "io.ktor:ktor-server-core:$ktor_version"
     implementation "io.ktor:ktor-client-core:$ktor_version"
@@ -26,14 +26,13 @@ dependencies {
     implementation "io.opentracing:opentracing-noop:$opentracing_version"
     implementation "io.opentracing:opentracing-util:$opentracing_version"
 
-    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.4.31'
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.4.31'
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.2"
-    testImplementation "com.willowtreeapps.assertk:assertk-jvm:0.23"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'com.willowtreeapps.assertk:assertk-jvm:0.25'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.2'
     testImplementation "io.opentracing:opentracing-mock:$opentracing_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "io.ktor:ktor-client-mock-jvm:$ktor_version"
-    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.8.2')
 }
 
 test {
@@ -44,6 +43,14 @@ ext {
     PUBLISH_GROUP_ID = 'com.zopa'
     PUBLISH_VERSION = '0.3.6'
     PUBLISH_ARTIFACT_ID = 'ktor-opentracing'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+kotlin {
+    explicitApi()
 }
 
 apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"

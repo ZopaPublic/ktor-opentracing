@@ -3,18 +3,18 @@ package com.zopa.ktor.opentracing
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.zopa.ktor.opentracing.util.mockTracer
-import io.ktor.application.call
-import io.ktor.application.install
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.routing
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
 import io.opentracing.util.GlobalTracer
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -47,11 +47,11 @@ class SpanTest {
                 }
 
                 val sqrt: Double = sqrtOfInt(2)
-                val sqrtSuspend: Double = runBlocking {
-                    sqrtOfIntSuspend(10)
+                runTest {
+                    val sqrtSuspend: Double = sqrtOfIntSuspend(10)
+                    call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
                 }
 
-                call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
             }
         }
 
@@ -64,7 +64,7 @@ class SpanTest {
                 // server span
                 assertThat(last().parentId()).isEqualTo(0L)
                 assertThat(last().operationName()).isEqualTo("GET /sqrt")
-                assertThat(last().tags().get("span.kind")).isEqualTo("server")
+                assertThat(last().tags()["span.kind"]).isEqualTo("server")
 
                 // first child span
                 assertThat(first().context().traceId()).isEqualTo(last().context().traceId())

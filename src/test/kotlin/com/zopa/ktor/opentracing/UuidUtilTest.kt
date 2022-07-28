@@ -9,9 +9,9 @@ import org.junit.jupiter.api.TestInstance
 class UuidUtilTest {
     @Test
     fun `UuidFromPath returns unchanged path and no uuid if no UUID in path`() {
-        val path = "/evidence"
+        val path = listOf("evidence")
 
-        val pathUuid = path.UuidFromPath()
+        val pathUuid = path.toPathUuid()
 
         assertThat(pathUuid.path).isEqualTo(path)
         assertThat(pathUuid.uuid).isEqualTo(null)
@@ -19,11 +19,11 @@ class UuidUtilTest {
 
     @Test
     fun `UuidFromPath returns path with UUID and uuid if UUID in path`() {
-        val path = "/evidence/AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F"
+        val path = listOf("evidence", "AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
 
-        val pathUuid = path.UuidFromPath()
+        val pathUuid = path.toPathUuid()
 
-        assertThat(pathUuid.path).isEqualTo("/evidence/<UUID>")
+        assertThat(pathUuid.path).isEqualTo(listOf("evidence", "<UUID>"))
         assertThat(pathUuid.uuid).isEqualTo("AB7AD59A-A0FF-4EB1-90CF-BC6D5C24095F")
     }
 }

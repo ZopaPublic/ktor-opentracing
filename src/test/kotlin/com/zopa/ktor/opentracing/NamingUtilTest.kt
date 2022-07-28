@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test
 
 class TracingUtilTest {
     @Test
-    fun `classAndMethodName returns class and method name for method of a class`() = runBlocking<Unit> {
+    fun `classAndMethodName returns class and method name for method of a class`() = runBlocking {
         var name: String? = null
 
         class Dog {
-            suspend fun bark() {
+            fun bark() {
                 name = classAndMethodName(this, object {})
             }
         }
@@ -40,7 +40,7 @@ class TracingUtilTest {
     fun `classAndMethodName does not return function name`() = runBlocking<Unit> {
         var name: String? = null
 
-        suspend fun bark() {
+        fun bark() {
             name = classAndMethodName(this, object {})
         }
 
@@ -50,7 +50,7 @@ class TracingUtilTest {
     }
 
     @Test
-    fun `classAndMethodName in extension function does not return function name`() = runBlocking<Unit> {
+    fun `classAndMethodName in extension function does not return function name`() = runBlocking {
         var name: String? = null
 
         fun String.toSomethingElse() {
