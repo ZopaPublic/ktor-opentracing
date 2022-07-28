@@ -13,18 +13,14 @@ import io.ktor.client.request.request
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.call
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.routing.*
+import io.ktor.server.testing.*
 import io.opentracing.Span
 import io.opentracing.util.GlobalTracer
 import kotlinx.coroutines.asContextElement
-import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -66,10 +62,11 @@ class OpenTracingClientTest {
             assertThat(call.response.status()).isEqualTo(HttpStatusCode.OK)
 
             with(mockTracer.finishedSpans()) {
+                println(this)
                 assertThat(size).isEqualTo(2)
 
                 assertThat(first().parentId()).isNotEqualTo(last().parentId())
-                assertThat(first().operationName()).isEqualTo("Call to GET localhostmember/<UUID>")
+                assertThat(first().operationName()).isEqualTo("Call to GET localhost/member/<UUID>")
                 assertThat(first().tags()["http.status_code"]).isEqualTo(200)
                 assertThat(first().tags()["UUID"]).isEqualTo("74c144e6-ec05-49af-b3a2-217e1254897f")
 
@@ -103,17 +100,15 @@ class OpenTracingClientTest {
         spanStack.push(span)
 
         assertDoesNotThrow {
-            runBlockingTest {
-                withContext(threadLocalSpanStack.asContextElement(spanStack)) {
-                    client.request("/4DCA6409-D958-417E-B4DD-20738C721C48/view").bodyAsText()
-                }
+            runTest(threadLocalSpanStack.asContextElement(spanStack)) {
+                client.request("/4DCA6409-D958-417E-B4DD-20738C721C48/view").bodyAsText()
             }
         }
 
         with(mockTracer.finishedSpans()) {
             assertThat(size).isEqualTo(1)
             assertThat(first().tags()).contains(Pair("span.kind", "client"))
-            assertThat(first().operationName()).isEqualTo("Call to GET localhost<UUID>/view")
+            assertThat(first().operationName()).isEqualTo("Call to GET localhost/<UUID>/view")
             assertThat(first().tags()).contains(Pair("UUID", "4DCA6409-D958-417E-B4DD-20738C721C48"))
         }
     }

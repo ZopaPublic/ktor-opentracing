@@ -22,7 +22,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle
 
 @TestInstance(Lifecycle.PER_CLASS)
-class KtorOpenTracingServerTest {
+class OpenTracingServerTest {
     @BeforeEach
     fun setup() {
         mockTracer.reset()

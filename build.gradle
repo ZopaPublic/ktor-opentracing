@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = "1.5.30"
-    ext.ktor_version = "2.0.0-eap-205"
+    ext.ktor_version = "2.0.3"
     ext.opentracing_version = "0.33.0"
 }
 
@@ -14,11 +14,10 @@ apply from: "${rootDir}/scripts/publish-root.gradle"
 
 repositories {
     mavenCentral()
-    maven { url 'https://maven.pkg.jetbrains.space/public/p/ktor/eap' }
 }
 
 dependencies {
-    implementation "io.github.microutils:kotlin-logging-jvm:2.0.11"
+    implementation 'io.github.microutils:kotlin-logging-jvm:2.1.23'
 
     implementation "io.ktor:ktor-server-core:$ktor_version"
     implementation "io.ktor:ktor-client-core:$ktor_version"
@@ -27,13 +26,13 @@ dependencies {
     implementation "io.opentracing:opentracing-noop:$opentracing_version"
     implementation "io.opentracing:opentracing-util:$opentracing_version"
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
-    testImplementation 'com.willowtreeapps.assertk:assertk-jvm:0.24'
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'com.willowtreeapps.assertk:assertk-jvm:0.25'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.2'
     testImplementation "io.opentracing:opentracing-mock:$opentracing_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "io.ktor:ktor-client-mock-jvm:$ktor_version"
-    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.7.2')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5.8.2')
 }
 
 test {
@@ -48,6 +47,10 @@ ext {
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+kotlin {
+    explicitApi()
 }
 
 apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"

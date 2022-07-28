@@ -12,8 +12,7 @@ import java.util.Stack
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-
-fun tracingContext(): CoroutineContext {
+public fun tracingContext(): CoroutineContext {
     val activeSpan: Span? = getGlobalTracer().scopeManager().activeSpan()
 
     val spanStack = Stack<Span>()
@@ -24,7 +23,7 @@ fun tracingContext(): CoroutineContext {
     return threadLocalSpanStack.asContextElement(spanStack)
 }
 
-fun CoroutineScope.launchTraced(
+public fun CoroutineScope.launchTraced(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
@@ -32,13 +31,13 @@ fun CoroutineScope.launchTraced(
 
 @Suppress("DeferredIsResult")
 @Deprecated("Use tracedAsync instead", ReplaceWith("tracedAsync(context, start, block)"))
-fun <T> CoroutineScope.asyncTraced(
+public fun <T> CoroutineScope.asyncTraced(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T
-) = tracedAsync(context, start, block)
+): Deferred<T> = tracedAsync(context, start, block)
 
-fun <T> CoroutineScope.tracedAsync(
+public fun <T> CoroutineScope.tracedAsync(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> T

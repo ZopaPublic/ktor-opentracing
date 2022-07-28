@@ -3,17 +3,19 @@ package com.zopa.ktor.opentracing
 import io.opentracing.Scope
 import io.opentracing.ScopeManager
 import io.opentracing.Span
+import mu.KotlinLogging
 import java.util.Stack
 
+private val logger = KotlinLogging.logger {}
 
 internal val threadLocalSpanStack = ThreadLocal<Stack<Span>>()
 
-class ThreadContextElementScopeManager: ScopeManager {
+public class ThreadContextElementScopeManager: ScopeManager {
     override fun activate(span: Span?): Scope {
         var spanStack = threadLocalSpanStack.get()
 
         if (spanStack == null) {
-            log.info { "Span stack is null, instantiating a new one." }
+            logger.info { "Span stack is null, instantiating a new one." }
             spanStack = Stack<Span>()
             threadLocalSpanStack.set(spanStack)
         }
@@ -32,7 +34,7 @@ internal class CoroutineThreadLocalScope: Scope {
     override fun close() {
         val spanStack = threadLocalSpanStack.get()
         if (spanStack == null) {
-            log.error { "spanStack is null" }
+            logger.error { "spanStack is null" }
             return
         }
 

@@ -8,12 +8,14 @@ import io.ktor.util.AttributeKey
 import io.opentracing.Tracer
 import io.opentracing.propagation.Format
 import io.opentracing.tag.Tags
+import mu.KotlinLogging
 
+private val logger = KotlinLogging.logger {}
 
-class OpenTracingClient {
-    class Config
+public class OpenTracingClient {
+    public class Config
 
-    companion object : HttpClientPlugin<Config, OpenTracingClient> {
+    public companion object : HttpClientPlugin<Config, OpenTracingClient> {
         override val key: AttributeKey<OpenTracingClient> = AttributeKey("OpenTracingClient")
 
         override fun prepare(block: Config.() -> Unit): OpenTracingClient {
@@ -27,7 +29,7 @@ class OpenTracingClient {
             scope.sendPipeline.intercept(HttpSendPipeline.State) {
                 val spanStack = threadLocalSpanStack.get()
                 if (spanStack == null) {
-                    log.warn("spanStack is null")
+                    logger.warn("spanStack is null")
                     return@intercept
                 }
 
@@ -52,12 +54,12 @@ class OpenTracingClient {
             scope.receivePipeline.intercept(HttpReceivePipeline.State) {
                 val spanStack = threadLocalSpanStack.get()
                 if (spanStack == null) {
-                    log.warn("spanStack is null")
+                    logger.warn("spanStack is null")
                     return@intercept
                 }
 
                 if (spanStack.isEmpty()) {
-                    log.error("span could not be found in thread local span context")
+                    logger.error("span could not be found in thread local span context")
                     return@intercept
                 }
                 val span = spanStack.pop()

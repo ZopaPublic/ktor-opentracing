@@ -10,8 +10,7 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.coroutines.coroutineContext
 
-
-val log = KotlinLogging.logger { }
+private val logger = KotlinLogging.logger {}
 
 private val uuidRegex =
     """\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-\b[0-9a-fA-F]{12}\b""".toRegex()
@@ -36,10 +35,10 @@ internal fun List<String>.toPathUuid(): PathUuid {
     return PathUuid(this, null)
 }
 
-fun getGlobalTracer(): Tracer {
+public fun getGlobalTracer(): Tracer {
     return GlobalTracer.get()
         ?: NoopTracerFactory.create()
-            .also { log.warn { "Tracer not registered in GlobalTracer. Using Noop tracer instead." } }
+            .also { logger.warn { "Tracer not registered in GlobalTracer. Using Noop tracer instead." } }
 }
 
 internal suspend fun Span.addCleanup() {
@@ -54,22 +53,22 @@ internal suspend fun Span.addCleanup() {
     }
 }
 
-fun Span.addConfiguredLambdaTags() {
+public fun Span.addConfiguredLambdaTags() {
     OpenTracingServer.config.lambdaTags.forEach {
         try {
             this.setTag(it.first, it.second.invoke())
         } catch (e: Exception) {
-            log.warn(e) { "Could not add tag: ${it.first}" }
+            logger.warn(e) { "Could not add tag: ${it.first}" }
         }
     }
 }
 
-/*
-    Helper function to name spans. Should only be used in method of a class as such:
-    classAndMethodName(this, object {})
-    Note that this function will give unexpected results if used in regular functions, extension functions and init functions. For these spans, it is preferable to define span names explicitly.
-*/
-fun classAndMethodName(
+/**
+ * Helper function to name spans. Should only be used in method of a class as such: `classAndMethodName(this, object {})`
+ * Note that this function will give unexpected results if used in regular functions, extension functions and init
+ * functions. For these spans, it is preferable to define span names explicitly.
+ */
+public fun classAndMethodName(
     currentInstance: Any,
     anonymousObjectCreatedInMethod: Any
 ): String {

@@ -1,11 +1,7 @@
 package com.zopa.ktor.opentracing
 
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.ApplicationCallPipeline
-import io.ktor.server.application.call
 import io.ktor.http.Headers
-import io.ktor.server.application.ApplicationPlugin
+import io.ktor.server.application.*
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.routing.Routing
@@ -20,25 +16,27 @@ import io.opentracing.tag.Tags
 import io.opentracing.util.GlobalTracer
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.withContext
+import mu.KotlinLogging
 import java.util.Stack
 
+private val logger = KotlinLogging.logger {}
 
-class OpenTracingServer {
-    class Configuration {
-        val filters = mutableListOf<(ApplicationCall) -> Boolean>()
-        val lambdaTags = mutableListOf<Pair<String, () -> String>>()
+public class OpenTracingServer {
+    public class Configuration {
+        internal val filters = mutableListOf<(ApplicationCall) -> Boolean>()
+        internal val lambdaTags = mutableListOf<Pair<String, () -> String>>()
 
-        fun filter(predicate: (ApplicationCall) -> Boolean) {
+        public fun filter(predicate: (ApplicationCall) -> Boolean) {
             filters.add(predicate)
         }
 
-        fun addTag(name: String, lambda: () -> String) {
+        public fun addTag(name: String, lambda: () -> String) {
             lambdaTags.add(Pair(name, lambda))
         }
     }
 
-    companion object Plugin : ApplicationPlugin<Application, Configuration, OpenTracingServer> {
-        override val key = AttributeKey<OpenTracingServer>("OpenTracingServer")
+    public companion object Plugin : BaseApplicationPlugin<Application, Configuration, OpenTracingServer> {
+        override val key: AttributeKey<OpenTracingServer> = AttributeKey("OpenTracingServer")
         internal var config = Configuration()
 
         override fun install(pipeline: Application, configure: Configuration.() -> Unit): OpenTracingServer {
@@ -61,7 +59,7 @@ class OpenTracingServer {
 
                 val clientSpanContext: SpanContext? =
                     tracer.extract(Format.Builtin.HTTP_HEADERS, TextMapAdapter(headers))
-                if (clientSpanContext == null) log.debug("Tracing context could not be found in request headers. Starting a new server trace.")
+                if (clientSpanContext == null) logger.debug("Tracing context could not be found in request headers. Starting a new server trace.")
 
                 val spanName = "${context.request.httpMethod.value} ${context.request.path()}"
 
@@ -102,12 +100,12 @@ class OpenTracingServer {
 
                 val spanStack = threadLocalSpanStack.get()
                 if (spanStack == null) {
-                    log.warn("spanStack is null")
+                    logger.warn("spanStack is null")
                     return@intercept
                 }
 
                 if (spanStack.isEmpty()) {
-                    log.error("Active span could not be found in thread local trace context")
+                    logger.error("Active span could not be found in thread local trace context")
                     return@intercept
                 }
                 val span = spanStack.pop()

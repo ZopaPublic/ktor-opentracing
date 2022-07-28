@@ -14,7 +14,7 @@ import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
 import io.opentracing.util.GlobalTracer
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -47,9 +47,8 @@ class SpanTest {
                 }
 
                 val sqrt: Double = sqrtOfInt(2)
-                runBlockingTest {
+                runTest {
                     val sqrtSuspend: Double = sqrtOfIntSuspend(10)
-
                     call.respond("Square root of 2: $sqrt, Square root of 10: $sqrtSuspend")
                 }
 
